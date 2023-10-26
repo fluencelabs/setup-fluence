@@ -26,6 +26,7 @@ function mapPlatform() {
   };
   return platformMappings[platform] || platform;
 }
+
 function extractTarGz(filePath, destination) {
   return new Promise((resolve, reject) => {
     fs.createReadStream(filePath)
@@ -33,6 +34,11 @@ function extractTarGz(filePath, destination) {
       .on('error', reject)
       .on('end', resolve);
   });
+}
+
+async function setupBinary(fluencePath) {
+    core.addPath(fluencePath);
+    await execSync(`${fluencePath} --version`, { stdio: 'inherit' });
 }
 
 async function downloadArtifact(artifactName) {
@@ -89,7 +95,7 @@ async function run() {
     if (artifactName) {
       try {
         fluencePath = await downloadArtifact(artifactName);
-        setupBinary(fluencePath);
+        await setupBinary(fluencePath);
         return;
       } catch (_error) {
         core.warning(
