@@ -65,9 +65,6 @@ async function downloadArtifact(artifactName) {
       throw new Error("No fcli tar archive found in the downloaded artifact.");
     }
 
-    const lsOutput = execSync(`ls -alh ${uniqueTempDir}`).toString();
-    core.info(`Directory contents:\n${lsOutput}`);
-
     const fluenceBinaryPath = path.join(uniqueTempDir, "fluence/bin/fluence");
 
     if (fs.existsSync(fluenceBinaryPath)) {

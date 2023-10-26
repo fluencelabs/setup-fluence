@@ -36,3 +36,6 @@ jobs:
         uses: ./
         with:
           artifact-name: fluence
+
+      - name: Test
+        run: fluence --version
