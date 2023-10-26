@@ -44,4 +44,6 @@ jobs:
           artifact-name: fluence
 
       - name: Test
-        run: fluence --version
+        run: |
+          echo $PATH
+          fluence --version
