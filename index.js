@@ -38,8 +38,10 @@ function extractTarGz(filePath, destination) {
 }
 
 async function setupBinary(fluencePath) {
-  core.addPath(fluencePath);
-  await execSync(`${fluencePath} --version`, { stdio: "inherit" });
+  const target = path.resolve(fluencePath, "../..");
+  fs.symlinkSync(fluencePath, target + "/fluence", "file");
+  core.addPath(path.dirname(target));
+  await execSync(`fluence --version`, { stdio: "inherit" });
 }
 
 async function downloadArtifact(artifactName) {
