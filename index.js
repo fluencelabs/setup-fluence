@@ -38,7 +38,7 @@ function extractTarGz(filePath, destination) {
 }
 
 async function setupBinary(fluencePath) {
-  const target = path.resolve(path.dirname(fluencePath) + "../..");
+  const target = path.resolve(path.dirname(fluencePath) + "../../..");
   fs.symlinkSync(fluencePath, target + "/fluence", "file");
   const ls = await execSync(`ls -alh ${target}`)
   core.info(ls)
