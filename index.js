@@ -58,14 +58,10 @@ async function downloadArtifact(artifactName) {
     uniqueTempDir,
   );
 
-  if (downloadResponse.downloadPath) {
-    fs.readdirSync(uniqueTempDir).forEach((file) => {
-      if (/fluence-.*\.tar\.gz$/.test(file)) {
-        extractTarGz(path.join(uniqueTempDir, file), uniqueTempDir);
-      }
-    });
-  const ls = execSync(`ls -alh ${uniqueTempDir}`)
-  core.info(`${ls}`)
+  try {
+    extractTarGz(downloadResponse.downloadPath, uniqueTempDir);
+    const ls = execSync(`ls -alh ${uniqueTempDir}`);
+    core.info(`${ls}`);
 
     const fluenceBinaryPath = path.join(
       uniqueTempDir,
@@ -79,7 +75,7 @@ async function downloadArtifact(artifactName) {
         `Expected fcli binary not found at: ${fluenceBinaryPath}`,
       );
     }
-  } else {
+  } catch {
     throw new Error(`Artifact ${artifactName} could not be downloaded`);
   }
 }
