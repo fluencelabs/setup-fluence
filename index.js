@@ -53,36 +53,35 @@ async function downloadArtifact(artifactName) {
   );
   fs.mkdirSync(uniqueTempDir, { recursive: true });
 
-  const downloadResponse = await artifactClient.downloadArtifact(
-    artifactName,
-    uniqueTempDir,
-  );
-
   try {
-    extractTarGz(downloadResponse.downloadPath, uniqueTempDir);
-    const ls = execSync(`ls -alh ${uniqueTempDir}`);
-    core.info(`${ls}`);
-
-    const fluenceBinaryPath = path.join(
+    const downloadResponse = await artifactClient.downloadArtifact(
+      artifactName,
       uniqueTempDir,
-      "fluence/bin/fluence",
     );
+    const [tarFile] = fs.readdirSync(downloadResponse.downloadPath);
+
+    if (tarFile.endsWith(".tar.gz")) {
+      const tarFilePath = path.join(downloadResponse.downloadPath, tarFile);
+      extractTarGz(tarFilePath, uniqueTempDir);
+    } else {
+      throw new Error("No fcli tar archive found in the downloaded artifact.");
+    }
+
+    const lsOutput = execSync(`ls -alh ${uniqueTempDir}`).toString();
+    core.info(`Directory contents:\n${lsOutput}`);
+
+    const fluenceBinaryPath = path.join(uniqueTempDir, "fluence/bin/fluence");
 
     if (fs.existsSync(fluenceBinaryPath)) {
       return fluenceBinaryPath;
     } else {
-      throw new Error(
-        `Expected fcli binary not found at: ${fluenceBinaryPath}`,
-      );
+      throw new Error(`Expected binary not found at: ${fluenceBinaryPath}`);
     }
-  } catch {
-    throw new Error(`Artifact ${artifactName} could not be downloaded`);
+  } catch (error) {
+    throw new Error(
+      `An error occurred while processing the artifact: ${error.message}`,
+    );
   }
-}
-
-function setupBinary(fluencePath) {
-  core.addPath(fluencePath);
-  execSync(`${fluencePath} --version`, { stdio: "inherit" });
 }
 
 async function run() {
