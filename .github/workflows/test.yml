@@ -1,0 +1,37 @@
+name: ci
+
+on:
+  pull_request:
+
+concurrency:
+  group: "${{ github.workflow }}-${{ github.ref }}"
+  cancel-in-progress: true
+
+jobs:
+  cli:
+    uses: fluencelabs/cli/.github/workflows/pack.yml
+    with:
+      ref: main
+      platform: linux-x64
+
+  test:
+    needs: cli
+    name: "setup-fluence"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup node
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+          cache: "npm"
+
+      - run: npm i
+      - run: npm run build
+
+      - name: Setup fcli
+        uses: ./
+        with:
+          artifact-name: linux-x64

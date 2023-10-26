@@ -1,0 +1,20 @@
+name: "Setup Marine"
+description: "Set up Fluence Marine CLI"
+author: "Fluence Labs"
+
+branding:
+  icon: "code"
+  color: "purple"
+
+inputs:
+  version:
+    description: "Version of marine to install"
+    type: string
+    default: "latest"
+  artifact-name:
+    description: "Artifact name from GitHub containing marine binary snapshot"
+    type: string
+
+runs:
+  using: "node16"
+  main: "dist/index.js"
