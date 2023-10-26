@@ -26,21 +26,13 @@ function mapPlatform() {
   };
   return platformMappings[platform] || platform;
 }
-
 function extractTarGz(filePath, destination) {
-  fs.createReadStream(filePath)
-    .pipe(tar.x({ C: destination }))
-    .on(
-      "error",
-      (err) =>
-        core.error(
-          `An error occurred while unpacking: ${err}`,
-        ),
-    )
-    .on(
-      "end",
-      () => core.debug("Unpacking complete"),
-    );
+  return new Promise((resolve, reject) => {
+    fs.createReadStream(filePath)
+      .pipe(tar.x({ C: destination }))
+      .on('error', reject)
+      .on('end', resolve);
+  });
 }
 
 async function downloadArtifact(artifactName) {
@@ -62,7 +54,7 @@ async function downloadArtifact(artifactName) {
 
     if (tarFile.endsWith(".tar.gz")) {
       const tarFilePath = path.join(downloadResponse.downloadPath, tarFile);
-      extractTarGz(tarFilePath, uniqueTempDir);
+      await extractTarGz(tarFilePath, uniqueTempDir);
     } else {
       throw new Error("No fcli tar archive found in the downloaded artifact.");
     }
