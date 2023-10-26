@@ -1,4 +1,5 @@
 const core = require("@actions/core");
+const { HttpClient } = require("@actions/http-client");
 // const tc = require("@actions/tool-cache");
 // const { Octokit } = require("@octokit/rest");
 const { create } = require("@actions/artifact");
@@ -6,7 +7,7 @@ const path = require("path");
 const fs = require("fs");
 const tar = require("tar");
 const { execSync } = require("child_process");
-// const BUCKET_URL = "https://fcli-binaries.s3.eu-west-1.amazonaws.com/";
+const BUCKET_URL = "https://fcli-binaries.s3.eu-west-1.amazonaws.com/";
 const SUPPORTED_PLATFORMS = [
   "linux-x86_64",
   "linux-arm64",
@@ -31,14 +32,14 @@ function extractTarGz(filePath, destination) {
   return new Promise((resolve, reject) => {
     fs.createReadStream(filePath)
       .pipe(tar.x({ C: destination }))
-      .on('error', reject)
-      .on('end', resolve);
+      .on("error", reject)
+      .on("end", resolve);
   });
 }
 
 async function setupBinary(fluencePath) {
-    core.addPath(fluencePath);
-    await execSync(`${fluencePath} --version`, { stdio: 'inherit' });
+  core.addPath(fluencePath);
+  await execSync(`${fluencePath} --version`, { stdio: "inherit" });
 }
 
 async function downloadArtifact(artifactName) {
@@ -101,29 +102,38 @@ async function run() {
       }
     }
 
-    // let version = core.getInput("version");
-    // if (version === "latest") {
-    //     version = await getLatestVersionFromReleases();
-    //     core.info(`Latest fluence release is v${version}`);
-    // } else {
-    //     version = version.replace(/^v/, "");
-    // }
+    const version = core.getInput("version");
 
-    // const filename = `marine`;
-    // const downloadUrl = `${BUCKET_URL}marine-v${version}/${filename}-${platform}`;
-    // const cachedPath = tc.find("marine", version, platform);
+    const httpClient = new HttpClient("action");
+    const channels = await httpClient.get(BUCKET_URL + "channels").readBody();
 
-    // if (!cachedPath) {
-    //     const downloadPath = await tc.downloadTool(downloadUrl);
-    //     marinePath = await tc.cacheFile(downloadPath, filename, "marine", version);
-    // } else {
-    //     marinePath = cachedPath;
-    // }
-
-    // await setupBinary(marinePath);
-  } catch (error) {
-    core.setFailed(error.message);
+    if (semver.valid(version)) {
+      core.info("downloading version todo");
+    } else if (channels.includes(version)) {
+      core.info("channels");
+      core.info(`${channels}`);
+    } else {
+      throw new Error("Invalid version or channel.");
+    }
+  } catch {
+    core.error(error);
   }
+
+  // const filename = `marine`;
+  // const downloadUrl = `${BUCKET_URL}marine-v${version}/${filename}-${platform}`;
+  // const cachedPath = tc.find("marine", version, platform);
+
+  // if (!cachedPath) {
+  //     const downloadPath = await tc.downloadTool(downloadUrl);
+  //     marinePath = await tc.cacheFile(downloadPath, filename, "marine", version);
+  // } else {
+  //     marinePath = cachedPath;
+  // }
+
+  // await setupBinary(marinePath);
+  // } catch (error) {
+  // core.setFailed(error.message);
+  // }
 }
 
 run();
