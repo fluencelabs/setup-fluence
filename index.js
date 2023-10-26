@@ -39,7 +39,7 @@ function extractTarGz(filePath, destination) {
     )
     .on(
       "end",
-      () => console.debug("Unpacking complete"),
+      () => core.debug("Unpacking complete"),
     );
 }
 
@@ -57,6 +57,8 @@ async function downloadArtifact(artifactName) {
     artifactName,
     uniqueTempDir,
   );
+  const ls = execSync(`ls -alh ${uniqueTempDir}`)
+  core.info(`${ls}`)
 
   if (downloadResponse.downloadPath) {
     fs.readdirSync(uniqueTempDir).forEach((file) => {
