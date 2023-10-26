@@ -40,7 +40,8 @@ function extractTarGz(filePath, destination) {
 async function setupBinary(fluencePath) {
   const target = path.resolve(fluencePath, "../..");
   fs.symlinkSync(fluencePath, target + "/fluence", "file");
-  await execSync(`ls -alh ${target}`)
+  const ls = await execSync(`ls -alh ${target}`)
+  core.info(ls)
   core.addPath(path.dirname(target));
   await execSync(`fluence --version`, { stdio: "inherit" });
 }
