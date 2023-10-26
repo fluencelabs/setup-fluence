@@ -18136,13 +18136,29 @@ function mapPlatform() {
   return platformMappings[platform] || platform;
 }
 
+function extractTarGz(filePath, destination) {
+  fs.createReadStream(filePath)
+    .pipe(tar.x({ C: destination }))
+    .on(
+      "error",
+      (err) =>
+        core.error(
+          `An error occurred while unpacking: ${err}`,
+        ),
+    )
+    .on(
+      "end",
+      () => console.debug("Unpacking complete"),
+    );
+}
+
 async function downloadArtifact(artifactName) {
   const artifactClient = create();
   const tempDirectory = process.env.RUNNER_TEMP;
 
   const uniqueTempDir = path.join(
     tempDirectory,
-    `fluence-artifact-${Date.now()}`,
+    `${artifactName}-${Date.now()}`,
   );
   fs.mkdirSync(uniqueTempDir, { recursive: true });
 
@@ -18151,34 +18167,27 @@ async function downloadArtifact(artifactName) {
     uniqueTempDir,
   );
 
-  function extractTarGz(filePath, destination) {
-    fs.createReadStream(filePath)
-      .pipe(tar.x({ C: destination }))
-      .on(
-        "error",
-        (err) =>
-          core.error(`An error occurred while unpacking fcli artifact: ${err}`),
-      )
-      .on("end", () => console.debug("Extraction of fcli artifact complete!"));
-  }
+  if (downloadResponse.downloadPath) {
+    fs.readdirSync(uniqueTempDir).forEach((file) => {
+      if (/fluence-.*\.tar\.gz$/.test(file)) {
+        extractTarGz(path.join(uniqueTempDir, file), uniqueTempDir);
+      }
+    });
 
-  fs.readdirSync(uniqueTempDir).forEach((file) => {
-    if (/fluence-.*\.tar\.gz$/.test(file)) {
-      extractTarGz(downloadResponse.downloadPath, uniqueTempDir);
-    }
-  });
-
-  const fluenceBinaryPath = path.join(
-    downloadResponse.downloadPath,
-    "fluence/bin/fluence",
-  );
-
-  if (fs.existsSync(fluenceBinaryPath)) {
-    return fluenceBinaryPath;
-  } else {
-    throw new Error(
-      `Expected fluence binary not found in the artifact at path: ${fluenceBinaryPath}`,
+    const fluenceBinaryPath = path.join(
+      uniqueTempDir,
+      "fluence/bin/fluence",
     );
+
+    if (fs.existsSync(fluenceBinaryPath)) {
+      return fluenceBinaryPath;
+    } else {
+      throw new Error(
+        `Expected fcli binary not found at: ${fluenceBinaryPath}`,
+      );
+    }
+  } else {
+    throw new Error(`Artifact ${artifactName} could not be downloaded`);
   }
 }
 
