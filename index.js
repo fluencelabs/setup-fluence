@@ -1,16 +1,17 @@
 const core = require("@actions/core");
-const tc = require("@actions/tool-cache");
-const { Octokit } = require("@octokit/rest");
+// const tc = require("@actions/tool-cache");
+// const { Octokit } = require("@octokit/rest");
 const { create } = require("@actions/artifact");
 const path = require("path");
 const fs = require("fs");
-const { execSync } = require('child_process');
-const BUCKET_URL = "https://fcli-binaries.s3.eu-west-1.amazonaws.com/";
+const tar = require('tar');
+const { execSync } = require("child_process");
+// const BUCKET_URL = "https://fcli-binaries.s3.eu-west-1.amazonaws.com/";
 const SUPPORTED_PLATFORMS = [
   "linux-x86_64",
   "linux-arm64",
   "darwin-x86_64",
-  "darwin-arm64"
+  "darwin-arm64",
 ];
 
 function mapPlatform() {
@@ -41,7 +42,27 @@ async function downloadArtifact(artifactName) {
     uniqueTempDir,
   );
 
-  const fluenceBinaryPath = path.join(downloadResponse.downloadPath, "fluence/bin/fluence");
+  function extractTarGz(filePath, destination) {
+    fs.createReadStream(filePath)
+      .pipe(tar.x({ C: destination }))
+      .on(
+        "error",
+        (err) =>
+          core.error(`An error occurred while unpacking fcli artifact: ${err}`),
+      )
+      .on("end", () => console.debug("Extraction of fcli artifact complete!"));
+  }
+
+  fs.readdirSync(uniqueTempDir).forEach((file) => {
+    if (/fluence-.*\.tar\.gz$/.test(file)) {
+      extractTarGz(downloadResponse.downloadPath, uniqueTempDir);
+    }
+  });
+
+  const fluenceBinaryPath = path.join(
+    downloadResponse.downloadPath,
+    "fluence/bin/fluence",
+  );
 
   if (fs.existsSync(fluenceBinaryPath)) {
     return fluenceBinaryPath;
@@ -52,54 +73,56 @@ async function downloadArtifact(artifactName) {
   }
 }
 
-async function setupBinary(fluencePath) {
-    core.addPath(fluencePath);
-    execSync(`${fluencePath}/fluence --version`, { stdio: 'inherit' });
+function setupBinary(fluencePath) {
+  core.addPath(fluencePath);
+  execSync(`${fluencePath} --version`, { stdio: "inherit" });
 }
 
 async function run() {
-    try {
-        const platform = mapPlatform();
-        if (!SUPPORTED_PLATFORMS.includes(platform)) {
-            throw new Error(`Unsupported platform: ${platform}`);
-        }
-
-        const artifactName = core.getInput("artifact-name");
-        let fluencePath;
-
-        if (artifactName) {
-            try {
-                fluencePath = await downloadArtifact(artifactName);
-                await setupBinary(fluencePath);
-                return;
-            } catch (_error) {
-                core.warning(`Failed to download artifact with name ${artifactName}. Fallback to releases.`);
-            }
-        }
-
-        // let version = core.getInput("version");
-        // if (version === "latest") {
-        //     version = await getLatestVersionFromReleases();
-        //     core.info(`Latest fluence release is v${version}`);
-        // } else {
-        //     version = version.replace(/^v/, "");
-        // }
-
-        // const filename = `marine`;
-        // const downloadUrl = `${BUCKET_URL}marine-v${version}/${filename}-${platform}`;
-        // const cachedPath = tc.find("marine", version, platform);
-
-        // if (!cachedPath) {
-        //     const downloadPath = await tc.downloadTool(downloadUrl);
-        //     marinePath = await tc.cacheFile(downloadPath, filename, "marine", version);
-        // } else {
-        //     marinePath = cachedPath;
-        // }
-
-        // await setupBinary(marinePath);
-    } catch (error) {
-        core.setFailed(error.message);
+  try {
+    const platform = mapPlatform();
+    if (!SUPPORTED_PLATFORMS.includes(platform)) {
+      throw new Error(`Unsupported platform: ${platform}`);
     }
+
+    const artifactName = core.getInput("artifact-name");
+    let fluencePath;
+
+    if (artifactName) {
+      try {
+        fluencePath = await downloadArtifact(artifactName);
+        setupBinary(fluencePath);
+        return;
+      } catch (_error) {
+        core.warning(
+          `Failed to download artifact with name ${artifactName}. Fallback to releases.`,
+        );
+      }
+    }
+
+    // let version = core.getInput("version");
+    // if (version === "latest") {
+    //     version = await getLatestVersionFromReleases();
+    //     core.info(`Latest fluence release is v${version}`);
+    // } else {
+    //     version = version.replace(/^v/, "");
+    // }
+
+    // const filename = `marine`;
+    // const downloadUrl = `${BUCKET_URL}marine-v${version}/${filename}-${platform}`;
+    // const cachedPath = tc.find("marine", version, platform);
+
+    // if (!cachedPath) {
+    //     const downloadPath = await tc.downloadTool(downloadUrl);
+    //     marinePath = await tc.cacheFile(downloadPath, filename, "marine", version);
+    // } else {
+    //     marinePath = cachedPath;
+    // }
+
+    // await setupBinary(marinePath);
+  } catch (error) {
+    core.setFailed(error.message);
+  }
 }
 
 run();
