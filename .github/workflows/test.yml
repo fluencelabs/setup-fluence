@@ -9,7 +9,7 @@ concurrency:
 
 jobs:
   cli:
-    uses: fluencelabs/cli/.github/workflows/pack.yml
+    uses: fluencelabs/cli/.github/workflows/pack.yml@main
     with:
       ref: main
       platform: linux-x64
