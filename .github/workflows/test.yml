@@ -9,10 +9,11 @@ concurrency:
 
 jobs:
   cli:
-    uses: fluencelabs/cli/.github/workflows/pack.yml@main
+    uses: fluencelabs/cli/.github/workflows/pack.yml@FLU-451
     with:
       ref: main
       platform: linux-x64
+      artifact-name: fluence
 
   test:
     needs: cli
@@ -34,4 +35,4 @@ jobs:
       - name: Setup fcli
         uses: ./
         with:
-          artifact-name: linux-x64
+          artifact-name: fluence
