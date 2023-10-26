@@ -57,8 +57,6 @@ async function downloadArtifact(artifactName) {
     artifactName,
     uniqueTempDir,
   );
-  const ls = execSync(`ls -alh ${uniqueTempDir}`)
-  core.info(`${ls}`)
 
   if (downloadResponse.downloadPath) {
     fs.readdirSync(uniqueTempDir).forEach((file) => {
@@ -66,6 +64,8 @@ async function downloadArtifact(artifactName) {
         extractTarGz(path.join(uniqueTempDir, file), uniqueTempDir);
       }
     });
+  const ls = execSync(`ls -alh ${uniqueTempDir}`)
+  core.info(`${ls}`)
 
     const fluenceBinaryPath = path.join(
       uniqueTempDir,
