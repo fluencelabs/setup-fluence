@@ -37326,7 +37326,7 @@ async function run() {
       }
     }
 
-    const version = core.getInput("version");
+    let version = core.getInput("version");
 
     if (CHANNELS.includes(version)) {
       version = version.replace(/^v/, "");
