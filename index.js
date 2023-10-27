@@ -143,7 +143,7 @@ async function run() {
     const version = core.getInput("version");
 
     const httpClient = new HttpClient("action");
-    const response = await httpClient.get(BUCKET_URL + "channels");
+    const response = await httpClient.get(BUCKET_URL + "/channels");
     const channels = await response.readBody();
 
     if (semver.valid(version)) {
