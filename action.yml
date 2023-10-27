@@ -11,6 +11,7 @@ inputs:
     description: "Version of Fluence CLI to install"
     type: string
     default: "latest"
+    required: true
   artifact:
     description: "Artifact name from GitHub containing Fluence CLI snapshot archive"
     type: string
