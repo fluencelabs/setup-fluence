@@ -32,11 +32,16 @@ function downloadFile(url, destinationPath) {
     https.get(url, (response) => {
       const totalLength = parseInt(response.headers["content-length"], 10);
       let downloadedLength = 0;
+      let lastLoggedProgress = 0;
 
       response.on("data", (chunk) => {
         downloadedLength += chunk.length;
-        const progress = (downloadedLength / totalLength * 100).toFixed(2);
-        process.stdout.write(`Downloading: ${progress}%\r`);
+        const progress = Math.floor(downloadedLength / totalLength * 100);
+
+        if (progress >= lastLoggedProgress + 5) {
+          lastLoggedProgress = progress;
+          console.log(`Downloading: ${progress}%`);
+        }
       });
 
       response.pipe(file);
@@ -113,7 +118,10 @@ async function downloadRelease(version) {
     const versionsData = JSON.parse(await response.readBody());
 
     if (!versionsData[version]) {
-      throw new Error(`Version ${version} not found.`);
+      const availableVersions = Object.keys(versionsData).join(", ");
+      throw new Error(
+        `Version ${version} not found. Available versions are: ${availableVersions}`,
+      );
     }
 
     const tarUrl = versionsData[version];
@@ -137,49 +145,66 @@ async function downloadRelease(version) {
   }
 }
 
+async function downloadChannel(channel) {
+  const tarUrl = `${BUCKET_URL}/channels/${channel}/fluence-${PLATFORM}.tar.gz`;
+  const tarFileName = path.basename(new URL(tarUrl).pathname);
+  const uniqueTempDir = await createTempDir(`fluence-${channel}`);
+  const tarFilePath = path.join(uniqueTempDir, tarFileName);
+
+  core.info(`Downloading fcli from channel ${channel} from ${tarUrl}`);
+  await downloadFile(tarUrl, tarFilePath);
+  await extractTarGz(tarFilePath, uniqueTempDir);
+
+  const fluenceBinaryPath = path.join(uniqueTempDir, "fluence/bin/fluence");
+  if (fs.existsSync(fluenceBinaryPath)) {
+    return fluenceBinaryPath;
+  } else {
+    throw new Error(`Expected binary not found at: ${fluenceBinaryPath}`);
+  }
+}
+
 async function run() {
   try {
     if (!SUPPORTED_PLATFORMS.includes(PLATFORM)) {
       throw new Error(`Unsupported platform: ${PLATFORM}`);
     }
 
-    const artifactName = core.getInput("artifact");
     let fluencePath;
+    const artifactName = core.getInput("artifact");
 
     if (artifactName) {
-      core.info(`Trying to download artifact with a name ${artifactName}`);
       try {
+        core.info(`Attempting to download artifact: ${artifactName}`);
         fluencePath = await downloadArtifact(artifactName);
         await setupBinary(fluencePath);
         return;
       } catch (error) {
         core.warning(
-          `Failed to download artifact with a name ${artifactName}: ${error}. Fallback to releases.`,
+          `Failed to download artifact ${artifactName} with ${error}. Falling back to releases.`,
         );
       }
     }
 
     const version = core.getInput("version");
-
     const httpClient = new HttpClient("action");
-    const response = await httpClient.get(BUCKET_URL + "/channels");
-    const channels = await response.readBody();
+    const channelsResponse = await httpClient.get(`${BUCKET_URL}/channels`);
+    const channels = (await channelsResponse.readBody()).split("\n").filter(
+      (channel) => channel,
+    );
 
-    if (semver.valid(version)) {
-      core.info(
-        `${version} appears to be a semver, trying to download fcli from releases`,
-      );
+    if (channels.includes(version)) {
+      fluencePath = await downloadChannel(version);
+    } else if (semver.valid(version)) {
       fluencePath = await downloadRelease(version);
-      await setupBinary(fluencePath);
-      return;
-    } else if (channels.includes(version)) {
-      core.info("channels");
-      core.info(`${channels}`);
     } else {
-      throw new Error("Invalid version or channel.");
+      throw new Error(
+        `Invalid input. Available channels: ${channels.join(", ")}`,
+      );
     }
+
+    await setupBinary(fluencePath);
   } catch (error) {
-    core.error(error);
+    core.setFailed(error);
   }
 }
 
