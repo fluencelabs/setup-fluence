@@ -8,7 +8,7 @@ const tar = require("tar");
 const semver = require("semver");
 const { execSync } = require("child_process");
 
-const BUCKET_URL = "https://fcli-binaries.s3.eu-west-1.amazonaws.com/";
+const BUCKET_URL = "https://fcli-binaries.s3.eu-west-1.amazonaws.com";
 const PLATFORM = `${process.platform}-${process.arch}`;
 const SUPPORTED_PLATFORMS = [
   "linux-x64",
