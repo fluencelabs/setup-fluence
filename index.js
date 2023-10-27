@@ -39,6 +39,7 @@ function extractTarGz(filePath, destination) {
 
 async function setupBinary(fluencePath) {
   const target = path.resolve(path.dirname(fluencePath) + "../../..");
+  core.info(target)
   fs.symlinkSync(fluencePath, target + "/fluence", "file");
   const ls = await execSync(`ls -alh ${target}`)
   core.info(ls)
@@ -119,7 +120,7 @@ async function run() {
     } else {
       throw new Error("Invalid version or channel.");
     }
-  } catch {
+  } catch (error) {
     core.error(error);
   }
 
