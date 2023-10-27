@@ -38,14 +38,16 @@ function extractTarGz(filePath, destination) {
 }
 
 async function setupBinary(fluencePath) {
-  const binDir = path.resolve(path.dirname(fluencePath) + "../../..");
-  const symlinkPath = path.resolve(binDir + "/fluence");
-  if (fs.existsSync(symlinkPath)) {
-    fs.unlinkSync(symlinkPath);
+  const binDir = path.resolve(path.dirname(fluencePath), "../../../bin");
+  if (!fs.existsSync(binDir)) {
+    fs.mkdirSync(binDir, { recursive: true });
   }
-  fs.symlinkSync(fluencePath, symlinkPath, "file");
-  core.addPath(path.dirname(binDir));
-  await execSync(`fluence --version`, { stdio: "inherit" });
+  const symlinkPath = path.join(binDir, "fluence");
+  if (!fs.existsSync(symlinkPath)) {
+    fs.symlinkSync(fluencePath, symlinkPath, "file");
+  }
+  core.addPath(binDir);
+  await execSync("fluence --version", { stdio: "inherit" });
 }
 
 async function downloadArtifact(artifactName) {
