@@ -1,5 +1,6 @@
 const https = require("https");
 const core = require("@actions/core");
+const { create } = require("@actions/artifact");
 const { HttpClient } = require("@actions/http-client");
 const path = require("path");
 const fs = require("fs");
