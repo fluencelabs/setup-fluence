@@ -15,22 +15,14 @@ const SUPPORTED_PLATFORMS = [
   "darwin-x64",
   "darwin-arm64",
 ];
-
-async function getAvailableChannels(predefinedChannels) {
-  const httpClient = new HttpClient("action");
-  let availableChannels = [];
-
-  for (const channel of predefinedChannels) {
-    const url = `${BUCKET_URL}/channels/${channel}/fluence-${PLATFORM}.tar.gz`;
-    const response = await httpClient.head(url);
-
-    if (response.message.statusCode === 200) {
-      availableChannels.push(channel);
-    }
-  }
-
-  return availableChannels;
-}
+const CHANNELS = [
+  "kras",
+  "testnet",
+  "stage",
+  "latest",
+  "stable",
+  "main"
+]
 
 async function createTempDir(prefix) {
   const tempDirectory = process.env.RUNNER_TEMP;
@@ -202,15 +194,14 @@ async function run() {
     }
 
     const version = core.getInput("version");
-    const channels = await getAvailableChannels();
 
-    if (channels.includes(version)) {
+    if (CHANNELS.includes(version)) {
       fluencePath = await downloadChannel(version);
     } else if (semver.valid(version)) {
       fluencePath = await downloadRelease(version);
     } else {
       throw new Error(
-        `Invalid input. Available channels: ${channels.join(", ")}`,
+        `Invalid input 'version'. Available channels: ${CHANNELS.join(", ")}`,
       );
     }
 
