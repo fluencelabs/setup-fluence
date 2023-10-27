@@ -1,7 +1,6 @@
+const https = require("https");
 const core = require("@actions/core");
 const { HttpClient } = require("@actions/http-client");
-// const tc = require("@actions/tool-cache");
-const { create } = require("@actions/artifact");
 const path = require("path");
 const fs = require("fs");
 const tar = require("tar");
@@ -19,13 +18,36 @@ const SUPPORTED_PLATFORMS = [
 
 async function createTempDir(prefix) {
   const tempDirectory = process.env.RUNNER_TEMP;
-
   const uniqueTempDir = path.join(
     tempDirectory,
     `${prefix}-${Date.now()}`,
   );
-  await fs.mkdirSync(uniqueTempDir, { recursive: true });
+  await fs.promises.mkdir(uniqueTempDir, { recursive: true });
   return uniqueTempDir;
+}
+
+function downloadFile(url, destinationPath) {
+  return new Promise((resolve, reject) => {
+    const file = fs.createWriteStream(destinationPath);
+    https.get(url, (response) => {
+      const totalLength = parseInt(response.headers["content-length"], 10);
+      let downloadedLength = 0;
+
+      response.on("data", (chunk) => {
+        downloadedLength += chunk.length;
+        const progress = (downloadedLength / totalLength * 100).toFixed(2);
+        process.stdout.write(`Downloading: ${progress}%\r`);
+      });
+
+      response.pipe(file);
+
+      file.on("finish", () => {
+        file.close(resolve);
+      });
+    }).on("error", (error) => {
+      fs.unlink(destinationPath, () => reject(error));
+    });
+  });
 }
 
 function extractTarGz(filePath, destination) {
@@ -91,25 +113,19 @@ async function downloadRelease(version) {
     const versionsData = JSON.parse(await response.readBody());
 
     if (!versionsData[version]) {
-      throw new Error(
-        `Version ${version} not found. Available versions are: ${
-          Object.keys(versionsData).join(", ")
-        }`,
-      );
+      throw new Error(`Version ${version} not found.`);
     }
+
     const tarUrl = versionsData[version];
     const tarFileName = path.basename(new URL(tarUrl).pathname);
-    core.info(`Downloading fcli version ${version} from ${tarUrl}`)
-    const tarResponse = await httpClient.get(tarUrl);
-    if (tarResponse.message.statusCode !== 200) {
-      throw new Error('Failed to download the fcli archive.');
-    }
     const uniqueTempDir = await createTempDir(`fluence-${version}`);
     const tarFilePath = path.join(uniqueTempDir, tarFileName);
-    fs.writeFileSync(tarFilePath, await tarResponse.readBody());
-    await extractTarGz(tarFilePath, uniqueTempDir);
-    const fluenceBinaryPath = path.join(uniqueTempDir, "fluence/bin/fluence");
 
+    core.info(`Downloading fcli version ${version} from ${tarUrl}`);
+    await downloadFile(tarUrl, tarFilePath);
+    await extractTarGz(tarFilePath, uniqueTempDir);
+
+    const fluenceBinaryPath = path.join(uniqueTempDir, "fluence/bin/fluence");
     if (fs.existsSync(fluenceBinaryPath)) {
       return fluenceBinaryPath;
     } else {
