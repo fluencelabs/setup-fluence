@@ -95,13 +95,12 @@ async function downloadArtifact(artifactName) {
 }
 
 async function downloadRelease(version) {
-  const platform = mapPlatform();
   const httpClient = new HttpClient("action");
+  const platform = process.platform + process.arch;
   const jsonUrl = `${BUCKET_URL}/versions/fluence-${platform}-tar-gz.json`;
 
   try {
     const response = await httpClient.get(jsonUrl);
-    console.log(await response.readBody())
     const versionsData = JSON.parse(await response.readBody());
 
     if (!versionsData[version]) {
