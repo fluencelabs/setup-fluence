@@ -16,6 +16,22 @@ const SUPPORTED_PLATFORMS = [
   "darwin-arm64",
 ];
 
+async function getAvailableChannels(predefinedChannels) {
+  const httpClient = new HttpClient("action");
+  let availableChannels = [];
+
+  for (const channel of predefinedChannels) {
+    const url = `${BUCKET_URL}/channels/${channel}/fluence-${PLATFORM}.tar.gz`;
+    const response = await httpClient.head(url);
+
+    if (response.message.statusCode === 200) {
+      availableChannels.push(channel);
+    }
+  }
+
+  return availableChannels;
+}
+
 async function createTempDir(prefix) {
   const tempDirectory = process.env.RUNNER_TEMP;
   const uniqueTempDir = path.join(
@@ -186,11 +202,7 @@ async function run() {
     }
 
     const version = core.getInput("version");
-    const httpClient = new HttpClient("action");
-    const channelsResponse = await httpClient.get(`${BUCKET_URL}/channels`);
-    const channels = (await channelsResponse.readBody()).split("\n").filter(
-      (channel) => channel,
-    );
+    const channels = await getAvailableChannels();
 
     if (channels.includes(version)) {
       fluencePath = await downloadChannel(version);
