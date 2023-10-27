@@ -1,0 +1,21 @@
+name: "Setup Fluence CLI"
+description: "Set up Fluence  CLI"
+author: "Fluence Labs"
+
+branding:
+  icon: "code"
+  color: "purple"
+
+inputs:
+  version:
+    description: "Version of Fluence CLI to install"
+    type: string
+    default: "latest"
+    required: true
+  artifact:
+    description: "Artifact name from GitHub containing Fluence CLI snapshot archive"
+    type: string
+
+runs:
+  using: "node20"
+  main: "dist/index.js"

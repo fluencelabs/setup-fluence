@@ -1,0 +1,80 @@
+name: ci
+
+on:
+  pull_request:
+
+concurrency:
+  group: "${{ github.workflow }}-${{ github.ref }}"
+  cancel-in-progress: true
+
+jobs:
+  cli:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download fcli archive
+        run: |
+          wget -q --show-progress https://github.com/fluencelabs/cli/releases/latest/download/fluence-cli-linux-x64.tar.gz
+
+      - name: Upload fluence archive
+        uses: actions/upload-artifact@v3
+        with:
+          name: fluence
+          path: fluence-cli-linux-x64.tar.gz
+
+  test-artifact:
+    needs: cli
+    name: "setup-fluence"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup node
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20
+          cache: "npm"
+
+      - run: npm i
+      - run: npm run build
+
+      - name: Setup fcli
+        uses: ./
+        with:
+          artifact: fluence
+
+      - name: Test
+        run: fluence --version
+
+  test-version:
+    name: "setup-fluence"
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-latest
+          - macos-latest
+        version:
+          - 0.11.2
+          - stage
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup node
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20
+          cache: "npm"
+
+      - run: npm i
+      - run: npm run build
+
+      - name: Setup fcli
+        uses: ./
+        with:
+          version: ${{ matrix.version }}
+
+      - name: Test
+        run: fluence --version
