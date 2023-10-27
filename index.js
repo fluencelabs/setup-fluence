@@ -88,7 +88,6 @@ async function downloadRelease(version) {
 
   try {
     const response = await httpClient.get(jsonUrl);
-    console.log(await response.readBody());
     const versionsData = JSON.parse(await response.readBody());
 
     if (!versionsData[version]) {
@@ -103,6 +102,7 @@ async function downloadRelease(version) {
     const tarResponse = await httpClient.get(tarUrl);
     const uniqueTempDir = await createTempDir(`fluence-${version}`);
     const tarFilePath = path.join(uniqueTempDir, tarFileName);
+    core.info(`Downloading fcli version ${version} from ${tarUrl}`)
     fs.writeFileSync(tarFilePath, await tarResponse.readBody());
     await extractTarGz(tarFilePath, uniqueTempDir);
     const fluenceBinaryPath = path.join(uniqueTempDir, "fluence/bin/fluence");
