@@ -29,14 +29,14 @@ function mapPlatform() {
   return platformMappings[platform] || platform;
 }
 
-async function createTempDir(prefix) {
+function createTempDir(prefix) {
   const tempDirectory = process.env.RUNNER_TEMP;
 
   const uniqueTempDir = path.join(
     tempDirectory,
     `${prefix}-${Date.now()}`,
   );
-  await fs.mkdirSync(uniqueTempDir, { recursive: true });
+  fs.mkdirSync(uniqueTempDir, { recursive: true });
   return uniqueTempDir;
 }
 
