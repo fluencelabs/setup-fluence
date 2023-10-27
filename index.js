@@ -186,9 +186,9 @@ async function run() {
     let version = core.getInput("version");
 
     if (CHANNELS.includes(version)) {
-      version = version.replace(/^v/, "");
       fluencePath = await downloadChannel(version);
     } else if (semver.valid(version)) {
+      version = version.replace(/^v/, "");
       fluencePath = await downloadRelease(version);
     } else {
       throw new Error(
