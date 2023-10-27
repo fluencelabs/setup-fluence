@@ -38,12 +38,13 @@ function extractTarGz(filePath, destination) {
 }
 
 async function setupBinary(fluencePath) {
-  const target = path.resolve(path.dirname(fluencePath) + "../../..");
+  const binDir = path.resolve(path.dirname(fluencePath) + "../../..");
+  const symlinkPath = path.resolve(binDir + "/fluence");
   if (fs.existsSync(symlinkPath)) {
     fs.unlinkSync(symlinkPath);
   }
-  fs.symlinkSync(fluencePath, target + "/fluence", "file");
-  core.addPath(path.dirname(target));
+  fs.symlinkSync(fluencePath, symlinkPath, "file");
+  core.addPath(path.dirname(binDir));
   await execSync(`fluence --version`, { stdio: "inherit" });
 }
 
@@ -96,7 +97,7 @@ async function run() {
     let fluencePath;
 
     if (artifactName) {
-      core.info(`Trying to download ${artifactName}`)
+      core.info(`Trying to download ${artifactName}`);
       try {
         fluencePath = await downloadArtifact(artifactName);
         await setupBinary(fluencePath);
