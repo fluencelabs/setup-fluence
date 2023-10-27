@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.1](https://github.com/fluencelabs/setup-fluence/compare/v1.0.0...v1.0.1) (2023-10-27)
+
+
+### Bug Fixes
+
+* Add unstable to allowed channels ([#5](https://github.com/fluencelabs/setup-fluence/issues/5)) ([d0eec14](https://github.com/fluencelabs/setup-fluence/commit/d0eec144eb2c91c469e5bf95b2a063ed6e5fdf63))
+
 ## 1.0.0 (2023-10-27)
 
 

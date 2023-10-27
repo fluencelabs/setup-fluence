@@ -1,6 +1,6 @@
 {
   "name": "setup-fluence",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Setup Fluence CLI for GitHub Actions",
   "main": "index.js",
   "scripts": {
