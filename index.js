@@ -47,7 +47,7 @@ async function setupBinary(fluencePath) {
     fs.symlinkSync(fluencePath, symlinkPath, "file");
   }
   core.addPath(binDir);
-  await execSync("fluence --version", { stdio: "inherit" });
+  await execSync("fluence dep versions", { stdio: "inherit" });
 }
 
 async function downloadArtifact(artifactName) {
@@ -99,14 +99,14 @@ async function run() {
     let fluencePath;
 
     if (artifactName) {
-      core.info(`Trying to download ${artifactName}`);
+      core.info(`Trying to download artifact with a name ${artifactName}`);
       try {
         fluencePath = await downloadArtifact(artifactName);
         await setupBinary(fluencePath);
         return;
       } catch (error) {
         core.warning(
-          `Failed to download ${artifactName}: ${error}. Fallback to releases.`,
+          `Failed to download artifact with a name ${artifactName}: ${error}. Fallback to releases.`,
         );
       }
     }
