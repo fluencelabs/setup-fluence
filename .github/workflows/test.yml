@@ -21,7 +21,7 @@ jobs:
           name: fluence
           path: fluence-cli-linux-x64.tar.gz
 
-  test:
+  test-artifact:
     needs: cli
     name: "setup-fluence"
     runs-on: ubuntu-latest
@@ -41,7 +41,39 @@ jobs:
       - name: Setup fcli
         uses: ./
         with:
-          artifact-name: fluence
+          artifact: fluence
+
+      - name: Test
+        run: fluence --version
+
+  test-version:
+    name: "setup-fluence"
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-latest
+          - macos-latest
+        version:
+          - 0.11.2
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup node
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+          cache: "npm"
+
+      - run: npm i
+      - run: npm run build
+
+      - name: Setup fcli
+        uses: ./
+        with:
+          version: ${{ matrix.version }}
 
       - name: Test
         run: fluence --version

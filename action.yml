@@ -1,5 +1,5 @@
-name: "Setup Marine"
-description: "Set up Fluence Marine CLI"
+name: "Setup Fluence CLI"
+description: "Set up Fluence  CLI"
 author: "Fluence Labs"
 
 branding:
@@ -8,13 +8,13 @@ branding:
 
 inputs:
   version:
-    description: "Version of marine to install"
+    description: "Version of Fluence CLI to install"
     type: string
     default: "latest"
-  artifact-name:
-    description: "Artifact name from GitHub containing marine binary snapshot"
+  artifact:
+    description: "Artifact name from GitHub containing Fluence CLI snapshot archive"
     type: string
 
 runs:
-  using: "node16"
+  using: "node18"
   main: "dist/index.js"

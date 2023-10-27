@@ -6,6 +6,7 @@ const { create } = require("@actions/artifact");
 const path = require("path");
 const fs = require("fs");
 const tar = require("tar");
+const semver = require("semver");
 const { execSync } = require("child_process");
 const BUCKET_URL = "https://fcli-binaries.s3.eu-west-1.amazonaws.com/";
 const SUPPORTED_PLATFORMS = [
@@ -26,6 +27,17 @@ function mapPlatform() {
     "darwin-arm64": "darwin-arm64",
   };
   return platformMappings[platform] || platform;
+}
+
+async function createTempDir(prefix) {
+  const tempDirectory = process.env.RUNNER_TEMP;
+
+  const uniqueTempDir = path.join(
+    tempDirectory,
+    `${prefix}-${Date.now()}`,
+  );
+  await fs.mkdirSync(uniqueTempDir, { recursive: true });
+  return uniqueTempDir;
 }
 
 function extractTarGz(filePath, destination) {
@@ -51,14 +63,8 @@ async function setupBinary(fluencePath) {
 }
 
 async function downloadArtifact(artifactName) {
+  const uniqueTempDir = createTempDir(artifactName);
   const artifactClient = create();
-  const tempDirectory = process.env.RUNNER_TEMP;
-
-  const uniqueTempDir = path.join(
-    tempDirectory,
-    `${artifactName}-${Date.now()}`,
-  );
-  fs.mkdirSync(uniqueTempDir, { recursive: true });
 
   try {
     const downloadResponse = await artifactClient.downloadArtifact(
@@ -88,6 +94,42 @@ async function downloadArtifact(artifactName) {
   }
 }
 
+async function downloadRelease(version) {
+  const platform = mapPlatform();
+  const httpClient = new HttpClient("action");
+  const jsonUrl = `${BUCKET_URL}versions/fluence-${platform}-tar-gz.json`;
+
+  try {
+    const response = await httpClient.get(jsonUrl);
+    const versionsData = JSON.parse(await response.readBody());
+
+    if (!versionsData[version]) {
+      throw new Error(
+        `Version ${version} not found. Available versions are: ${
+          Object.keys(versionsData).join(", ")
+        }`,
+      );
+    }
+    const tarUrl = versionsData[version];
+    const tarFileName = path.basename(new URL(tarUrl).pathname);
+    const tarResponse = await httpClient.get(tarUrl);
+    const uniqueTempDir = createTempDir(`fluence-${version}`);
+    const tarFilePath = path.join(uniqueTempDir, tarFileName);
+    fs.writeFileSync(tarFilePath, await tarResponse.readBody());
+    await extractTarGz(tarFilePath, uniqueTempDir);
+    const fluenceBinaryPath = path.join(uniqueTempDir, "fluence/bin/fluence");
+
+    if (fs.existsSync(fluenceBinaryPath)) {
+      return fluenceBinaryPath;
+    } else {
+      throw new Error(`Expected binary not found at: ${fluenceBinaryPath}`);
+    }
+  } catch (error) {
+    core.error(error);
+    throw error;
+  }
+}
+
 async function run() {
   try {
     const platform = mapPlatform();
@@ -95,7 +137,7 @@ async function run() {
       throw new Error(`Unsupported platform: ${platform}`);
     }
 
-    const artifactName = core.getInput("artifact-name");
+    const artifactName = core.getInput("artifact");
     let fluencePath;
 
     if (artifactName) {
@@ -118,7 +160,12 @@ async function run() {
     const channels = await response.readBody();
 
     if (semver.valid(version)) {
-      core.info("downloading version todo");
+      core.info(
+        `${version} appears to be a semver, trying to download fcli from releases`,
+      );
+      fluencePath = await downloadRelease(version);
+      await setupBinary(fluencePath);
+      return;
     } else if (channels.includes(version)) {
       core.info("channels");
       core.info(`${channels}`);
@@ -128,22 +175,6 @@ async function run() {
   } catch (error) {
     core.error(error);
   }
-
-  // const filename = `marine`;
-  // const downloadUrl = `${BUCKET_URL}marine-v${version}/${filename}-${platform}`;
-  // const cachedPath = tc.find("marine", version, platform);
-
-  // if (!cachedPath) {
-  //     const downloadPath = await tc.downloadTool(downloadUrl);
-  //     marinePath = await tc.cacheFile(downloadPath, filename, "marine", version);
-  // } else {
-  //     marinePath = cachedPath;
-  // }
-
-  // await setupBinary(marinePath);
-  // } catch (error) {
-  // core.setFailed(error.message);
-  // }
 }
 
 run();
