@@ -29,14 +29,14 @@ function mapPlatform() {
   return platformMappings[platform] || platform;
 }
 
-function createTempDir(prefix) {
+async function createTempDir(prefix) {
   const tempDirectory = process.env.RUNNER_TEMP;
 
   const uniqueTempDir = path.join(
     tempDirectory,
     `${prefix}-${Date.now()}`,
   );
-  fs.mkdirSync(uniqueTempDir, { recursive: true });
+  await fs.mkdirSync(uniqueTempDir, { recursive: true });
   return uniqueTempDir;
 }
 
@@ -63,7 +63,7 @@ async function setupBinary(fluencePath) {
 }
 
 async function downloadArtifact(artifactName) {
-  const uniqueTempDir = createTempDir(artifactName);
+  const uniqueTempDir = await createTempDir(artifactName);
   const artifactClient = create();
 
   try {
@@ -113,7 +113,7 @@ async function downloadRelease(version) {
     const tarUrl = versionsData[version];
     const tarFileName = path.basename(new URL(tarUrl).pathname);
     const tarResponse = await httpClient.get(tarUrl);
-    const uniqueTempDir = createTempDir(`fluence-${version}`);
+    const uniqueTempDir = await createTempDir(`fluence-${version}`);
     const tarFilePath = path.join(uniqueTempDir, tarFileName);
     fs.writeFileSync(tarFilePath, await tarResponse.readBody());
     await extractTarGz(tarFilePath, uniqueTempDir);
