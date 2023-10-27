@@ -21,8 +21,8 @@ const CHANNELS = [
   "stage",
   "latest",
   "stable",
-  "main"
-]
+  "main",
+];
 
 async function createTempDir(prefix) {
   const tempDirectory = process.env.RUNNER_TEMP;
@@ -35,6 +35,7 @@ async function createTempDir(prefix) {
 }
 
 function downloadFile(url, destinationPath) {
+  core.info(`Downloading ${url}`);
   return new Promise((resolve, reject) => {
     const file = fs.createWriteStream(destinationPath);
     https.get(url, (response) => {
@@ -48,7 +49,7 @@ function downloadFile(url, destinationPath) {
 
         if (progress >= lastLoggedProgress + 5) {
           lastLoggedProgress = progress;
-          console.log(`Downloading: ${progress}%`);
+          core.info(`Downloading: ${progress}%`);
         }
       });
 
@@ -72,8 +73,13 @@ function extractTarGz(filePath, destination) {
   });
 }
 
-async function setupBinary(fluencePath) {
-  const binDir = path.resolve(path.dirname(fluencePath), "../../../bin");
+async function setupBinary(dir) {
+  const fluencePath = path.resolve(dir + "/fluence/bin/fluence");
+  if (!fs.existsSync(fluencePath)) {
+    throw new Error(`Expected binary not found at: ${fluencePath}`);
+  }
+
+  const binDir = path.resolve(dir + "/bin");
   if (!fs.existsSync(binDir)) {
     fs.mkdirSync(binDir, { recursive: true });
   }
@@ -100,16 +106,9 @@ async function downloadArtifact(artifactName) {
       const tarFilePath = path.join(downloadResponse.downloadPath, tarFile);
       await extractTarGz(tarFilePath, uniqueTempDir);
     } else {
-      throw new Error("No fcli tar archive found in the downloaded artifact.");
+      throw new Error("No fcli archive found in the downloaded artifact.");
     }
-
-    const fluenceBinaryPath = path.join(uniqueTempDir, "fluence/bin/fluence");
-
-    if (fs.existsSync(fluenceBinaryPath)) {
-      return fluenceBinaryPath;
-    } else {
-      throw new Error(`Expected binary not found at: ${fluenceBinaryPath}`);
-    }
+    return uniqueTempDir;
   } catch (error) {
     throw new Error(
       `An error occurred while processing the artifact: ${error.message}`,
@@ -137,16 +136,11 @@ async function downloadRelease(version) {
     const uniqueTempDir = await createTempDir(`fluence-${version}`);
     const tarFilePath = path.join(uniqueTempDir, tarFileName);
 
-    core.info(`Downloading fcli version ${version} from ${tarUrl}`);
+    core.info(`Downloading fcli version ${version}`);
     await downloadFile(tarUrl, tarFilePath);
     await extractTarGz(tarFilePath, uniqueTempDir);
 
-    const fluenceBinaryPath = path.join(uniqueTempDir, "fluence/bin/fluence");
-    if (fs.existsSync(fluenceBinaryPath)) {
-      return fluenceBinaryPath;
-    } else {
-      throw new Error(`Expected binary not found at: ${fluenceBinaryPath}`);
-    }
+    return uniqueTempDir;
   } catch (error) {
     core.error(error);
     throw error;
@@ -159,16 +153,11 @@ async function downloadChannel(channel) {
   const uniqueTempDir = await createTempDir(`fluence-${channel}`);
   const tarFilePath = path.join(uniqueTempDir, tarFileName);
 
-  core.info(`Downloading fcli from channel ${channel} from ${tarUrl}`);
+  core.info(`Downloading fcli from channel ${channel}`);
   await downloadFile(tarUrl, tarFilePath);
   await extractTarGz(tarFilePath, uniqueTempDir);
 
-  const fluenceBinaryPath = path.join(uniqueTempDir, "fluence/bin/fluence");
-  if (fs.existsSync(fluenceBinaryPath)) {
-    return fluenceBinaryPath;
-  } else {
-    throw new Error(`Expected binary not found at: ${fluenceBinaryPath}`);
-  }
+  return uniqueTempDir;
 }
 
 async function run() {
