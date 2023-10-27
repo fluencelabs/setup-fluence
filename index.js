@@ -100,6 +100,10 @@ async function downloadRelease(version) {
     const tarUrl = versionsData[version];
     const tarFileName = path.basename(new URL(tarUrl).pathname);
     const tarResponse = await httpClient.get(tarUrl);
+    if (tarResponse.message.statusCode !== 200) {
+      throw new Error('Failed to download the tar file.');
+    }
+    console.log(await tarResponse.readBody());
     const uniqueTempDir = await createTempDir(`fluence-${version}`);
     const tarFilePath = path.join(uniqueTempDir, tarFileName);
     core.info(`Downloading fcli version ${version} from ${tarUrl}`)
