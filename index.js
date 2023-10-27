@@ -1,33 +1,21 @@
 const core = require("@actions/core");
 const { HttpClient } = require("@actions/http-client");
 // const tc = require("@actions/tool-cache");
-// const { Octokit } = require("@octokit/rest");
 const { create } = require("@actions/artifact");
 const path = require("path");
 const fs = require("fs");
 const tar = require("tar");
 const semver = require("semver");
 const { execSync } = require("child_process");
+
 const BUCKET_URL = "https://fcli-binaries.s3.eu-west-1.amazonaws.com/";
+const PLATFORM = `${process.platform}-${process.arch}`;
 const SUPPORTED_PLATFORMS = [
   "linux-x86_64",
   "linux-arm64",
   "darwin-x86_64",
   "darwin-arm64",
 ];
-
-function mapPlatform() {
-  const os = process.platform;
-  const arch = process.arch;
-  const platform = `${os}-${arch}`;
-  const platformMappings = {
-    "linux-x64": "linux-x86_64",
-    "darwin-x64": "darwin-x86_64",
-    "linux-arm64": "linux-arm64",
-    "darwin-arm64": "darwin-arm64",
-  };
-  return platformMappings[platform] || platform;
-}
 
 async function createTempDir(prefix) {
   const tempDirectory = process.env.RUNNER_TEMP;
@@ -96,12 +84,11 @@ async function downloadArtifact(artifactName) {
 
 async function downloadRelease(version) {
   const httpClient = new HttpClient("action");
-  const platform = process.platform + process.arch;
-  const jsonUrl = `${BUCKET_URL}/versions/fluence-${platform}-tar-gz.json`;
+  const jsonUrl = `${BUCKET_URL}/versions/fluence-${PLATFORM}-tar-gz.json`;
 
   try {
     const response = await httpClient.get(jsonUrl);
-    console.log(await response.readBody())
+    console.log(await response.readBody());
     const versionsData = JSON.parse(await response.readBody());
 
     if (!versionsData[version]) {
@@ -133,9 +120,8 @@ async function downloadRelease(version) {
 
 async function run() {
   try {
-    const platform = mapPlatform();
-    if (!SUPPORTED_PLATFORMS.includes(platform)) {
-      throw new Error(`Unsupported platform: ${platform}`);
+    if (!SUPPORTED_PLATFORMS.includes(PLATFORM)) {
+      throw new Error(`Unsupported platform: ${PLATFORM}`);
     }
 
     const artifactName = core.getInput("artifact");
