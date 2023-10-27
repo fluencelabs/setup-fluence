@@ -101,7 +101,7 @@ async function downloadRelease(version) {
 
   try {
     const response = await httpClient.get(jsonUrl);
-    console.log(response.readBody())
+    console.log(await response.readBody())
     const versionsData = JSON.parse(await response.readBody());
 
     if (!versionsData[version]) {
