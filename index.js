@@ -100,9 +100,9 @@ async function run() {
         fluencePath = await downloadArtifact(artifactName);
         await setupBinary(fluencePath);
         return;
-      } catch (_error) {
+      } catch (error) {
         core.warning(
-          `Failed to download artifact with name ${artifactName}. Fallback to releases.`,
+          `Failed to download ${artifactName}: ${error}. Fallback to releases.`,
         );
       }
     }
@@ -110,7 +110,8 @@ async function run() {
     const version = core.getInput("version");
 
     const httpClient = new HttpClient("action");
-    const channels = await httpClient.get(BUCKET_URL + "channels").readBody();
+    const response = await httpClient.get(BUCKET_URL + "channels");
+    const channels = await response.readBody();
 
     if (semver.valid(version)) {
       core.info("downloading version todo");
