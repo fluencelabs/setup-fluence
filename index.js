@@ -11,9 +11,9 @@ const { execSync } = require("child_process");
 const BUCKET_URL = "https://fcli-binaries.s3.eu-west-1.amazonaws.com/";
 const PLATFORM = `${process.platform}-${process.arch}`;
 const SUPPORTED_PLATFORMS = [
-  "linux-x86_64",
+  "linux-x64",
   "linux-arm64",
-  "darwin-x86_64",
+  "darwin-x64",
   "darwin-arm64",
 ];
 
