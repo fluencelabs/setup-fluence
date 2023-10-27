@@ -19,8 +19,8 @@ steps:
 - `kras` - version compatible with current `kras` env
 - `testnet` - version compatible with current `testnet` env
 - `stage` - version compatible with current `stage` env
-- `latest` - latest stable versions (same as `kras`)
-- `stable` - latest stable versions (same as `kras`)
+- `latest` - latest stable version (same as `kras`)
+- `stable` - latest stable version (same as `kras`)
 - `main` - latest build from `main` branch
 - `unstable` - latest release of Fluence CLI
 

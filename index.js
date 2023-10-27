@@ -23,6 +23,7 @@ const CHANNELS = [
   "latest",
   "stable",
   "main",
+  "unstable",
 ];
 
 async function createTempDir(prefix) {
