@@ -115,19 +115,19 @@ async function downloadArtifact(artifact) {
   let zipFilePath;
 
   try {
-      const artifactClient = new DefaultArtifactClient();
-      const artifactId = await artifactClient.getArtifact(artifact);
-      const {downloadPath} = await artifactClient.downloadArtifact(
-        artifactId.id,
-        { path: uniqueTempDir },
-      );
-    console.log(downloadPath)
-      const [zipFile] = fs.readdirSync(downloadPath);
+    const artifactClient = new DefaultArtifactClient();
+    const artifactId = await artifactClient.getArtifact(artifact);
+    const { downloadPath } = await artifactClient.downloadArtifact(
+      artifactId.id,
+      { path: uniqueTempDir },
+    );
+    console.log(downloadPath);
+    const [zipFile] = fs.readdirSync(downloadPath);
 
-      if (!zipFile.endsWith(".zip")) {
-        throw new Error("No zip archive found in the downloaded artifact.");
-      }
-      zipFilePath = path.join(downloadPath, zipFile);
+    if (!zipFile.endsWith(".zip")) {
+      throw new Error("No zip archive found in the downloaded artifact.");
+    }
+    zipFilePath = path.join(downloadPath, zipFile);
 
     // Extract the zip file
     const zipExtractPath = path.join(uniqueTempDir, "extracted");
