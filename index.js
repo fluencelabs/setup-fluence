@@ -232,6 +232,7 @@ async function run() {
               `Failed to download artifact '${artifact}' with error:
               ${error}`,
             );
+            process.exit(1);
           }
           case NoArtifactOptions.ignore: {
             core.info(
