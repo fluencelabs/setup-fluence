@@ -143,6 +143,7 @@ async function downloadArtifact(artifact, token) {
       const { artifactId } = artifactClient.getArtifact(artifact, {
         token: token,
       });
+      console.log(artifactId)
       const { downloadPath } = await artifactClient.downloadArtifact(
         artifactId,
         { path: uniqueTempDir, token: token },
