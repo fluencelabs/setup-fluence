@@ -50,31 +50,31 @@ jobs:
       - name: Test
         run: fluence --version
 
-  test-artifact-url:
-    needs: cli
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+  # test-artifact-url:
+  #   needs: cli
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Checkout repository
+  #       uses: actions/checkout@v4
 
-      - name: Setup node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: "npm"
+  #     - name: Setup node
+  #       uses: actions/setup-node@v4
+  #       with:
+  #         node-version: 20
+  #         cache: "npm"
 
-      - run: npm i
-      - run: npm run build
+  #     - run: npm i
+  #     - run: npm run build
 
-      - name: Setup fcli
-        uses: ./
-        with:
-          artifact: ${{ needs.cli.outputs.artifact }}
-          if-no-artifact-found: error
-          token: ${{ secrets.GITHUB_TOKEN }}
+  #     - name: Setup fcli
+  #       uses: ./
+  #       with:
+  #         artifact: ${{ needs.cli.outputs.artifact }}
+  #         if-no-artifact-found: error
+  #         token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Test
-        run: fluence --version
+  #     - name: Test
+  #       run: fluence --version
 
   test-version:
     name: "setup-fluence"

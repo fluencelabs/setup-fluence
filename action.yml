@@ -13,7 +13,7 @@ inputs:
     default: "latest"
     required: true
   artifact:
-    description: "Artifact name or a URL from GitHub containing Fluence CLI snapshot archive"
+    description: "Artifact name from GitHub containing Fluence CLI snapshot archive"
     type: string
   token:
     description: "GITHUB_TOKEN or PAT to find and download artifact"

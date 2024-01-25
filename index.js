@@ -33,18 +33,6 @@ const NoArtifactOptions = {
   ignore: "ignore",
 };
 
-function isValidHttpUrl(string) {
-  let url;
-
-  try {
-    url = new URL(string);
-  } catch (_) {
-    return false;
-  }
-
-  return url.protocol === "http:" || url.protocol === "https:";
-}
-
 async function createTempDir(prefix) {
   const tempDirectory = process.env.RUNNER_TEMP;
   const uniqueTempDir = path.join(
@@ -69,7 +57,6 @@ function downloadFile(url, destinationPath, headers) {
     });
 
     response.then((axiosResponse) => {
-      console.log(axiosResponse)
       const totalLength = parseInt(axiosResponse.headers["content-length"], 10);
       let downloadedLength = 0;
       let lastLoggedProgress = 0;
@@ -128,18 +115,6 @@ async function downloadArtifact(artifact, token) {
   let zipFilePath;
 
   try {
-    // Check if artifact is a URL
-    if (isValidHttpUrl(artifact)) {
-      const fileName = path.basename(new URL(artifact).pathname);
-      zipFilePath = path.join(uniqueTempDir, fileName);
-      const headers = {};
-      if (artifact.includes("github.com")) {
-        headers["Authorization"] = `Bearer ${token}`;
-      }
-
-      await downloadFile(artifact, zipFilePath, headers);
-    } else {
-      // Use artifact client to download the artifact
       const artifactClient = new DefaultArtifactClient();
       const { artifactId } = await artifactClient.getArtifact(artifact, {
         token: token,
@@ -154,7 +129,6 @@ async function downloadArtifact(artifact, token) {
         throw new Error("No zip archive found in the downloaded artifact.");
       }
       zipFilePath = path.join(downloadPath, zipFile);
-    }
 
     // Extract the zip file
     const zipExtractPath = path.join(uniqueTempDir, "extracted");
