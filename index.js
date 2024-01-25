@@ -121,8 +121,8 @@ async function downloadArtifact(artifact, token) {
         artifactId.id,
         { path: uniqueTempDir, token: token },
       );
-    console.log(downloadPath)
-      const [zipFile] = fs.readdirSync(downloadPath);
+    console.log(downloadPath.path)
+      const [zipFile] = fs.readdirSync(downloadPath.path);
 
       if (!zipFile.endsWith(".zip")) {
         throw new Error("No zip archive found in the downloaded artifact.");
