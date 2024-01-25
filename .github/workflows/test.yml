@@ -26,7 +26,6 @@ jobs:
 
   test-artifact-name:
     needs: cli
-    name: "setup-fluence"
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -51,7 +50,6 @@ jobs:
 
   test-artifact-url:
     needs: cli
-    name: "setup-fluence"
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
