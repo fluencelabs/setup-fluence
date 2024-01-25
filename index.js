@@ -135,6 +135,7 @@ async function downloadArtifact(artifact) {
       if (artifact.includes("github.com")) {
         headers["Authorization"] = `token ${process.env.GITHUB_TOKEN}`;
       }
+      console.log(headers);
 
       await downloadFile(artifact, zipFilePath, headers);
     } else {
