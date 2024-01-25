@@ -116,7 +116,7 @@ async function downloadArtifact(artifact, token) {
 
   try {
       const artifactClient = new DefaultArtifactClient();
-      const { artifactId } = await artifactClient.getArtifact(artifact);
+      const artifactId = await artifactClient.getArtifact(artifact);
 console.log(artifactId);
       const { downloadPath } = await artifactClient.downloadArtifact(
         artifactId,
