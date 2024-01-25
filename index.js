@@ -68,9 +68,8 @@ function downloadFile(url, destinationPath, headers) {
       headers: headers,
     });
 
-    console.log(response)
-
     response.then((axiosResponse) => {
+      console.log(axiosResponse)
       const totalLength = parseInt(axiosResponse.headers["content-length"], 10);
       let downloadedLength = 0;
       let lastLoggedProgress = 0;
@@ -145,12 +144,10 @@ async function downloadArtifact(artifact, token) {
       const { artifactId } = await artifactClient.getArtifact(artifact, {
         token: token,
       });
-      console.log(artifactId)
       const { downloadPath } = await artifactClient.downloadArtifact(
         artifactId,
         { path: uniqueTempDir, token: token },
       );
-      console.log(downloadPath);
       const [zipFile] = fs.readdirSync(downloadPath);
 
       if (!zipFile.endsWith(".zip")) {
