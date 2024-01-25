@@ -122,6 +122,8 @@ async function downloadArtifact(artifact) {
       { path: uniqueTempDir },
     );
     console.log(downloadPath);
+const filesInTempDir = fs.readdirSync(uniqueTempDir);
+        console.log(`Contents of ${uniqueTempDir}:`, filesInTempDir);
     zipFilePath = path.join(downloadPath, `${artifact}.zip`);
 
     // Extract the zip file
