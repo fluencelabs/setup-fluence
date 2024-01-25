@@ -26,6 +26,12 @@ const CHANNELS = [
   "unstable",
 ];
 
+const NoFileOptions = {
+  warn: "warn",
+  error: "error",
+  ignore: "ignore",
+};
+
 function isValidHttpUrl(string) {
   let url;
 
@@ -189,6 +195,19 @@ async function run() {
       throw new Error(`Unsupported platform: ${PLATFORM}`);
     }
 
+    const ifNoArtifactFound = core.getInput(Inputs.IfNoArtifactFound);
+    const noArtifactBehavior = NoArtifactOptions[ifNoArtifactFound];
+
+    if (!noArtifactBehavior) {
+      core.setFailed(
+        `Unrecognized ${Inputs.IfNoArtifactFound} input. Provided: ${ifNoArtifactFound}. Available options: ${
+          Object.keys(
+            NoArtifactOptions,
+          )
+        }`,
+      );
+    }
+
     let fluencePath;
     const artifact = core.getInput("artifact");
 
@@ -199,9 +218,27 @@ async function run() {
         await setupBinary(fluencePath);
         return;
       } catch (error) {
-        core.warning(
-          `Failed to download artifact ${artifact} with ${error}. Falling back to releases.`,
-        );
+        switch (ifNoArtifactFound) {
+          case NoArtifactOptions.warn: {
+            core.warning(
+              `Failed to download artifact ${artifact} with ${error}. Falling back to releases.`,
+            );
+            break;
+          }
+          case NoFileOptions.error: {
+            core.setFailed(
+              `Failed to download artifact ${artifact} with ${error}.`,
+            );
+            break;
+          }
+          case NoFileOptions.ignore: {
+            core.info(
+              `Failed to download artifact ${artifact} with ${error}. Falling back to releases.`,
+            );
+            break;
+          }
+        }
+        core.warning();
       }
     }
 

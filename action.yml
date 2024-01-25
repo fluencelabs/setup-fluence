@@ -15,6 +15,10 @@ inputs:
   artifact:
     description: "Artifact name or a URL from GitHub containing Fluence CLI snapshot archive"
     type: string
+  if-no-artifact-found:
+    decription: "The desired behavior if no artifacts were downloaded"
+    type: string
+    default: "warn" # warn error ignore
 
 runs:
   using: "node20"
