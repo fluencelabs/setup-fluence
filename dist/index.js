@@ -43719,6 +43719,14 @@ try {
 
 /***/ }),
 
+/***/ 2798:
+/***/ ((module) => {
+
+module.exports = eval("require")("unzipper");
+
+
+/***/ }),
+
 /***/ 9491:
 /***/ ((module) => {
 
@@ -44009,6 +44017,7 @@ const fs = __nccwpck_require__(7147);
 const tar = __nccwpck_require__(4674);
 const semver = __nccwpck_require__(1383);
 const { execSync } = __nccwpck_require__(2081);
+const unzipper = __nccwpck_require__(2798);
 
 const BUCKET_URL = "https://fcli-binaries.s3.eu-west-1.amazonaws.com";
 const PLATFORM = `${process.platform}-${process.arch}`;
@@ -44117,27 +44126,28 @@ async function downloadArtifact(artifact) {
   const uniqueTempDir = await createTempDir(artifact);
 
   try {
-    // Check if artifact is a URL
-    if (isValidHttpUrl(artifact)) {
-      const tarFileName = path.basename(new URL(artifact).pathname);
-      const tarFilePath = path.join(uniqueTempDir, tarFileName);
-      await downloadFile(artifact, tarFilePath);
-      await extractTarGz(tarFilePath, uniqueTempDir);
-    } else {
-      // If not a URL, try donwloading artifact with artifactClient
-      const artifactClient = create();
-      const downloadResponse = await artifactClient.downloadArtifact(
-        artifact,
-        uniqueTempDir,
-      );
-      const [tarFile] = fs.readdirSync(downloadResponse.downloadPath);
+    const artifactFileName = path.basename(new URL(artifact).pathname);
+    const artifactFilePath = path.join(uniqueTempDir, artifactFileName);
+    await downloadFile(artifact, artifactFilePath);
 
-      if (tarFile.endsWith(".tar.gz")) {
-        const tarFilePath = path.join(downloadResponse.downloadPath, tarFile);
-        await extractTarGz(tarFilePath, uniqueTempDir);
-      } else {
-        throw new Error("No fcli archive found in the downloaded artifact.");
+    if (artifactFileName.endsWith(".zip")) {
+      // If the artifact is a ZIP file, extract it to get the TAR file
+      await extractZip(artifactFilePath, uniqueTempDir);
+      const tarFileName = fs.readdirSync(uniqueTempDir).find((file) =>
+        file.endsWith(".tar.gz")
+      );
+      if (!tarFileName) {
+        throw new Error("No .tar.gz file found in the extracted ZIP archive.");
       }
+      const tarFilePath = path.join(uniqueTempDir, tarFileName);
+      await extractTarGz(tarFilePath, uniqueTempDir);
+    } else if (artifactFileName.endsWith(".tar.gz")) {
+      // If the artifact is a TAR.GZ file, extract it
+      await extractTarGz(artifactFilePath, uniqueTempDir);
+    } else {
+      throw new Error(
+        "The downloaded artifact is neither a .zip nor a .tar.gz file.",
+      );
     }
     return uniqueTempDir;
   } catch (error) {
@@ -44145,6 +44155,15 @@ async function downloadArtifact(artifact) {
       `An error occurred while processing the artifact: ${error.message}`,
     );
   }
+}
+
+function extractZip(filePath, destination) {
+  return new Promise((resolve, reject) => {
+    fs.createReadStream(filePath)
+      .pipe(unzipper.Extract({ path: destination }))
+      .on("error", reject)
+      .on("finish", resolve);
+  });
 }
 
 async function downloadRelease(version) {
