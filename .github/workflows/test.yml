@@ -45,6 +45,7 @@ jobs:
         with:
           artifact: fluence
           if-no-artifact-found: error
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Test
         run: fluence --version
@@ -70,6 +71,7 @@ jobs:
         with:
           artifact: ${{ needs.cli.outputs.artifact }}
           if-no-artifact-found: error
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Test
         run: fluence --version
