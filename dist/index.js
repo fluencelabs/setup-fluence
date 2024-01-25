@@ -60653,46 +60653,49 @@ async function setupBinary(dir) {
 
 async function downloadArtifact(artifact) {
   const uniqueTempDir = await createTempDir(artifact);
+  let zipFilePath = path.join(uniqueTempDir, `${artifact}.zip`);
 
   try {
-    const artifactFileName = path.basename(new URL(artifact).pathname);
-    const artifactFilePath = path.join(uniqueTempDir, artifactFileName);
-    downloadFile(artifact, artifactFilePath);
-
-    if (artifactFileName.endsWith(".zip")) {
-      // If the artifact is a ZIP file, extract it to get the TAR file
-      await extractZip(artifactFilePath, uniqueTempDir);
-      const tarFileName = fs.readdirSync(uniqueTempDir).find((file) =>
-        file.endsWith(".tar.gz")
-      );
-      if (!tarFileName) {
-        throw new Error("No .tar.gz file found in the extracted ZIP archive.");
-      }
-      const tarFilePath = path.join(uniqueTempDir, tarFileName);
-      await extractTarGz(tarFilePath, uniqueTempDir);
-    } else if (artifactFileName.endsWith(".tar.gz")) {
-      // If the artifact is a TAR.GZ file, extract it
-      await extractTarGz(artifactFilePath, uniqueTempDir);
+    // Check if artifact is a URL
+    if (isValidHttpUrl(artifact)) {
+      await downloadFile(artifact, zipFilePath);
     } else {
-      throw new Error(
-        "The downloaded artifact is neither a .zip nor a .tar.gz file.",
+      // Use artifact client to download the artifact
+      const artifactClient = create();
+      const downloadResponse = await artifactClient.downloadArtifact(
+        artifact,
+        uniqueTempDir,
       );
+      const [zipFile] = fs.readdirSync(downloadResponse.downloadPath);
+
+      if (!zipFile.endsWith(".zip")) {
+        throw new Error("No zip archive found in the downloaded artifact.");
+      }
+      zipFilePath = path.join(downloadResponse.downloadPath, zipFile);
     }
+
+    // Extract the zip file
+    const zipExtractPath = path.join(uniqueTempDir, "extracted");
+    await fs.promises.mkdir(zipExtractPath, { recursive: true });
+    await unzipper.Open.file(zipFilePath)
+      .then((d) => d.extract({ path: zipExtractPath }));
+
+    // Find the .tar.gz file inside the extracted directory and extract it
+    const extractedFiles = fs.readdirSync(zipExtractPath);
+    const tarGzFile = extractedFiles.find((file) => file.endsWith(".tar.gz"));
+    if (!tarGzFile) {
+      throw new Error("No .tar.gz file found inside the zip archive.");
+    }
+
+    const tarGzFilePath = path.join(zipExtractPath, tarGzFile);
+    await extractTarGz(tarGzFilePath, uniqueTempDir);
+
     return uniqueTempDir;
   } catch (error) {
     throw new Error(
       `An error occurred while processing the artifact: ${error.message}`,
     );
   }
-}
-
-function extractZip(filePath, destination) {
-  return new Promise((resolve, reject) => {
-    fs.createReadStream(filePath)
-      .pipe(unzipper.Extract({ path: destination }))
-      .on("error", reject)
-      .on("finish", resolve);
-  });
 }
 
 async function downloadRelease(version) {
