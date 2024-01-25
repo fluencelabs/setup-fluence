@@ -133,7 +133,7 @@ async function downloadArtifact(artifact, token) {
       zipFilePath = path.join(uniqueTempDir, fileName);
       const headers = {};
       if (artifact.includes("github.com")) {
-        headers["Authorization"] = `token ${token}`;
+        headers["authorization"] = `Bearer ${token}`;
       }
 
       await downloadFile(artifact, zipFilePath, headers);
