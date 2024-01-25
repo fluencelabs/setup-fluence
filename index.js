@@ -1,6 +1,6 @@
 const axios = require("axios");
 const core = require("@actions/core");
-const { create } = require("@actions/artifact");
+const { DefaultArtifactClient } = require("@actions/artifact");
 const { HttpClient } = require("@actions/http-client");
 const path = require("path");
 const fs = require("fs");
@@ -55,26 +55,25 @@ async function createTempDir(prefix) {
   return uniqueTempDir;
 }
 
-function downloadFile(url, destinationPath) {
+function downloadFile(url, destinationPath, headers) {
   core.info(`Downloading ${url}`);
-  return new Promise(async (resolve, reject) => {
+
+  return new Promise((resolve, reject) => {
     const writer = fs.createWriteStream(destinationPath);
 
-    try {
-      const response = await axios({
-        method: "get",
-        url: url,
-        responseType: "stream",
-        headers: {
-          Authorization: `token ${process.env.GITHUB_TOKEN}`,
-        },
-      });
+    const response = axios({
+      method: "get",
+      url: url,
+      responseType: "stream",
+      headers,
+    });
 
-      const totalLength = parseInt(response.headers["content-length"], 10);
+    response.then((axiosResponse) => {
+      const totalLength = parseInt(axiosResponse.headers["content-length"], 10);
       let downloadedLength = 0;
       let lastLoggedProgress = 0;
 
-      response.data.on("data", (chunk) => {
+      axiosResponse.data.on("data", (chunk) => {
         downloadedLength += chunk.length;
         const progress = Math.floor((downloadedLength / totalLength) * 100);
 
@@ -84,15 +83,15 @@ function downloadFile(url, destinationPath) {
         }
       });
 
-      response.data.pipe(writer);
+      axiosResponse.data.pipe(writer);
 
       writer.on("finish", () => {
         writer.close();
         resolve();
       });
-    } catch (error) {
+    }).catch((error) => {
       reject(error);
-    }
+    });
   });
 }
 
@@ -132,15 +131,19 @@ async function downloadArtifact(artifact) {
     if (isValidHttpUrl(artifact)) {
       const fileName = path.basename(new URL(artifact).pathname);
       zipFilePath = path.join(uniqueTempDir, fileName);
-      await downloadFile(artifact, zipFilePath);
+      const headers = {};
+      if (artifact.includes("github.com")) {
+        headers["Authorization"] = `token ${process.env.GITHUB_TOKEN}`;
+      }
+
+      await downloadFile(artifact, zipFilePath, headers);
     } else {
       // Use artifact client to download the artifact
-      const artifactClient = create();
+      const artifactClient = new DefaultArtifactClient();
+      const artifactId = artifactClient.getArtifact(artifact);
       const downloadResponse = await artifactClient.downloadArtifact(
-        artifact,
-        uniqueTempDir,
-        "",
-        { token: process.env.GITHUB_TOKEN },
+        artifactId,
+        { uniqueTempDir },
       );
       const [zipFile] = fs.readdirSync(downloadResponse.downloadPath);
 
@@ -262,6 +265,7 @@ async function run() {
               ${error}`,
             );
             process.exit(1);
+            break;
           }
           case NoArtifactOptions.ignore: {
             core.info(
