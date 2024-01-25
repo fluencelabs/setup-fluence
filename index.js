@@ -1,4 +1,4 @@
-const https = require("https");
+const axios = require("axios");
 const core = require("@actions/core");
 const { create } = require("@actions/artifact");
 const { HttpClient } = require("@actions/http-client");
@@ -57,16 +57,23 @@ async function createTempDir(prefix) {
 
 function downloadFile(url, destinationPath) {
   core.info(`Downloading ${url}`);
-  return new Promise((resolve, reject) => {
-    const file = fs.createWriteStream(destinationPath);
-    https.get(url, (response) => {
+  return new Promise(async (resolve, reject) => {
+    const writer = fs.createWriteStream(destinationPath);
+
+    try {
+      const response = await axios({
+        method: "get",
+        url: url,
+        responseType: "stream",
+      });
+
       const totalLength = parseInt(response.headers["content-length"], 10);
       let downloadedLength = 0;
       let lastLoggedProgress = 0;
 
-      response.on("data", (chunk) => {
+      response.data.on("data", (chunk) => {
         downloadedLength += chunk.length;
-        const progress = Math.floor(downloadedLength / totalLength * 100);
+        const progress = Math.floor((downloadedLength / totalLength) * 100);
 
         if (progress >= lastLoggedProgress + 5) {
           lastLoggedProgress = progress;
@@ -74,14 +81,15 @@ function downloadFile(url, destinationPath) {
         }
       });
 
-      response.pipe(file);
+      response.data.pipe(writer);
 
-      file.on("finish", () => {
-        file.close(resolve);
+      writer.on("finish", () => {
+        writer.close();
+        resolve();
       });
-    }).on("error", (error) => {
-      fs.unlink(destinationPath, () => reject(error));
-    });
+    } catch (error) {
+      reject(error);
+    }
   });
 }
 
