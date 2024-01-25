@@ -110,7 +110,7 @@ async function setupBinary(dir) {
   await execSync("fluence dep versions", { stdio: "inherit" });
 }
 
-async function downloadArtifact(artifact, token) {
+async function downloadArtifact(artifact) {
   const uniqueTempDir = await createTempDir(artifact);
   let zipFilePath;
 
@@ -119,7 +119,7 @@ async function downloadArtifact(artifact, token) {
       const artifactId = await artifactClient.getArtifact(artifact);
       const downloadPath = await artifactClient.downloadArtifact(
         artifactId.id,
-        { path: uniqueTempDir, token: token },
+        { path: uniqueTempDir },
       );
     console.log(downloadPath.path)
       const [zipFile] = fs.readdirSync(downloadPath.path);
@@ -221,13 +221,8 @@ async function run() {
 
     if (artifact) {
       try {
-        const token = core.getInput("token");
-        if (!token) {
-          core.setFailed("Token is required when using artifact.");
-          process.exit(1);
-        }
         core.info(`Attempting to download artifact: ${artifact}`);
-        fluencePath = await downloadArtifact(artifact, token);
+        fluencePath = await downloadArtifact(artifact);
         await setupBinary(fluencePath);
         return;
       } catch (error) {
