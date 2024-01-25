@@ -65,7 +65,7 @@ function downloadFile(url, destinationPath, headers) {
       method: "get",
       url: url,
       responseType: "stream",
-      headers,
+      headers: headers,
     });
 
     response.then((axiosResponse) => {
@@ -135,24 +135,23 @@ async function downloadArtifact(artifact, token) {
       if (artifact.includes("github.com")) {
         headers["Authorization"] = `token ${token}`;
       }
-      console.log(headers);
 
       await downloadFile(artifact, zipFilePath, headers);
     } else {
       // Use artifact client to download the artifact
       const artifactClient = new DefaultArtifactClient();
       const artifactId = artifactClient.getArtifact(artifact, { token: token });
-      const downloadResponse = await artifactClient.downloadArtifact(
+      const {downloadPath} = await artifactClient.downloadArtifact(
         artifactId,
         { path: uniqueTempDir, token: token },
       );
-      console.log(downloadResponse)
-      const [zipFile] = fs.readdirSync(downloadResponse.downloadPath);
+      console.log(downloadPath)
+      const [zipFile] = fs.readdirSync(downloadPath);
 
       if (!zipFile.endsWith(".zip")) {
         throw new Error("No zip archive found in the downloaded artifact.");
       }
-      zipFilePath = path.join(downloadResponse.downloadPath, zipFile);
+      zipFilePath = path.join(downloadPath, zipFile);
     }
 
     // Extract the zip file
