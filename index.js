@@ -26,7 +26,7 @@ const CHANNELS = [
   "unstable",
 ];
 
-const NoFileOptions = {
+const NoArtifactOptions = {
   warn: "warn",
   error: "error",
   ignore: "ignore",
