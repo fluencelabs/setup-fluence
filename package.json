@@ -21,8 +21,7 @@
     "@actions/core": "^1.10.1",
     "axios": "^1.6.6",
     "semver": "^7.5.4",
-    "tar": "^6.2.0",
-    "unzipper": "^0.10.14"
+    "tar": "^6.2.0"
   },
   "devDependencies": {
     "@vercel/ncc": "0.38.1"

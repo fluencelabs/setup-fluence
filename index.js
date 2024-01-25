@@ -7,7 +7,6 @@ const fs = require("fs");
 const tar = require("tar");
 const semver = require("semver");
 const { execSync } = require("child_process");
-const unzipper = require("unzipper");
 
 const BUCKET_URL = "https://fcli-binaries.s3.eu-west-1.amazonaws.com";
 const PLATFORM = `${process.platform}-${process.arch}`;
@@ -117,31 +116,19 @@ async function downloadArtifact(artifact) {
   try {
     const artifactClient = new DefaultArtifactClient();
     const artifactId = await artifactClient.getArtifact(artifact);
-    const {downloadPath} = await artifactClient.downloadArtifact(
+    const { downloadPath } = await artifactClient.downloadArtifact(
       artifactId.artifact.id,
       { path: uniqueTempDir },
     );
     console.log(downloadPath);
-const filesInTempDir = fs.readdirSync(uniqueTempDir);
-        console.log(`Contents of ${uniqueTempDir}:`, filesInTempDir);
-    zipFilePath = path.join(downloadPath, `${artifact}.zip`);
+    const [tarFile] = fs.readdirSync(downloadPath);
 
-    // Extract the zip file
-    const zipExtractPath = path.join(uniqueTempDir, "extracted");
-    await fs.promises.mkdir(zipExtractPath, { recursive: true });
-    await unzipper.Open.file(zipFilePath)
-      .then((d) => d.extract({ path: zipExtractPath }));
-
-    // Find the .tar.gz file inside the extracted directory and extract it
-    const extractedFiles = fs.readdirSync(zipExtractPath);
-    const tarGzFile = extractedFiles.find((file) => file.endsWith(".tar.gz"));
-    if (!tarGzFile) {
-      throw new Error("No .tar.gz file found inside the zip archive.");
+    if (tarFile.endsWith(".tar.gz")) {
+      const tarFilePath = path.join(downloadPath, tarFile);
+      await extractTarGz(tarFilePath, uniqueTempDir);
+    } else {
+      throw new Error("No fcli archive found in the downloaded artifact.");
     }
-
-    const tarGzFilePath = path.join(zipExtractPath, tarGzFile);
-    await extractTarGz(tarGzFilePath, uniqueTempDir);
-
     return uniqueTempDir;
   } catch (error) {
     throw new Error(
