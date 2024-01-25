@@ -44028,6 +44028,18 @@ const CHANNELS = [
   "unstable",
 ];
 
+function isValidHttpUrl(string) {
+  let url;
+
+  try {
+    url = new URL(string);
+  } catch (_) {
+    return false;
+  }
+
+  return url.protocol === "http:" || url.protocol === "https:";
+}
+
 async function createTempDir(prefix) {
   const tempDirectory = process.env.RUNNER_TEMP;
   const uniqueTempDir = path.join(
@@ -44095,22 +44107,31 @@ async function setupBinary(dir) {
   await execSync("fluence dep versions", { stdio: "inherit" });
 }
 
-async function downloadArtifact(artifactName) {
-  const uniqueTempDir = await createTempDir(artifactName);
-  const artifactClient = create();
+async function downloadArtifact(artifact) {
+  const uniqueTempDir = await createTempDir(artifact);
 
   try {
-    const downloadResponse = await artifactClient.downloadArtifact(
-      artifactName,
-      uniqueTempDir,
-    );
-    const [tarFile] = fs.readdirSync(downloadResponse.downloadPath);
-
-    if (tarFile.endsWith(".tar.gz")) {
-      const tarFilePath = path.join(downloadResponse.downloadPath, tarFile);
+    // Check if artifact is a URL
+    if (isValidHttpUrl(artifact)) {
+      const tarFileName = path.basename(new URL(artifact).pathname);
+      const tarFilePath = path.join(uniqueTempDir, tarFileName);
+      await downloadFile(artifact, tarFilePath);
       await extractTarGz(tarFilePath, uniqueTempDir);
     } else {
-      throw new Error("No fcli archive found in the downloaded artifact.");
+      // If not a URL, try donwloading artifact with artifactClient
+      const artifactClient = create();
+      const downloadResponse = await artifactClient.downloadArtifact(
+        artifact,
+        uniqueTempDir,
+      );
+      const [tarFile] = fs.readdirSync(downloadResponse.downloadPath);
+
+      if (tarFile.endsWith(".tar.gz")) {
+        const tarFilePath = path.join(downloadResponse.downloadPath, tarFile);
+        await extractTarGz(tarFilePath, uniqueTempDir);
+      } else {
+        throw new Error("No fcli archive found in the downloaded artifact.");
+      }
     }
     return uniqueTempDir;
   } catch (error) {
@@ -44171,17 +44192,17 @@ async function run() {
     }
 
     let fluencePath;
-    const artifactName = core.getInput("artifact");
+    const artifact = core.getInput("artifact");
 
-    if (artifactName) {
+    if (artifact) {
       try {
-        core.info(`Attempting to download artifact: ${artifactName}`);
-        fluencePath = await downloadArtifact(artifactName);
+        core.info(`Attempting to download artifact: ${artifact}`);
+        fluencePath = await downloadArtifact(artifact);
         await setupBinary(fluencePath);
         return;
       } catch (error) {
         core.warning(
-          `Failed to download artifact ${artifactName} with ${error}. Falling back to releases.`,
+          `Failed to download artifact ${artifact} with ${error}. Falling back to releases.`,
         );
       }
     }
