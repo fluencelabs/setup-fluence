@@ -44,6 +44,7 @@ jobs:
         uses: ./
         with:
           artifact: fluence
+          if-no-artifact-found: error
 
       - name: Test
         run: fluence --version
@@ -68,6 +69,7 @@ jobs:
         uses: ./
         with:
           artifact: ${{ needs.cli.outputs.artifact }}
+          if-no-artifact-found: error
 
       - name: Test
         run: fluence --version
