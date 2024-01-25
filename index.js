@@ -118,7 +118,7 @@ async function downloadArtifact(artifact) {
   try {
     const artifactFileName = path.basename(new URL(artifact).pathname);
     const artifactFilePath = path.join(uniqueTempDir, artifactFileName);
-    await downloadFile(artifact, artifactFilePath);
+    downloadFile(artifact, artifactFilePath);
 
     if (artifactFileName.endsWith(".zip")) {
       // If the artifact is a ZIP file, extract it to get the TAR file
