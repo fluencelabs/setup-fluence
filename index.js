@@ -122,7 +122,7 @@ async function setupBinary(dir) {
   await execSync("fluence dep versions", { stdio: "inherit" });
 }
 
-async function downloadArtifact(artifact) {
+async function downloadArtifact(artifact, token) {
   const uniqueTempDir = await createTempDir(artifact);
   let zipFilePath;
 
@@ -133,7 +133,7 @@ async function downloadArtifact(artifact) {
       zipFilePath = path.join(uniqueTempDir, fileName);
       const headers = {};
       if (artifact.includes("github.com")) {
-        headers["Authorization"] = `token ${process.env.GITHUB_TOKEN}`;
+        headers["Authorization"] = `token ${token}`;
       }
       console.log(headers);
 
@@ -141,11 +141,12 @@ async function downloadArtifact(artifact) {
     } else {
       // Use artifact client to download the artifact
       const artifactClient = new DefaultArtifactClient();
-      const artifactId = artifactClient.getArtifact(artifact);
+      const artifactId = artifactClient.getArtifact(artifact, { token: token });
       const downloadResponse = await artifactClient.downloadArtifact(
         artifactId,
-        { uniqueTempDir },
+        { path: uniqueTempDir, token: token },
       );
+      console.log(downloadResponse)
       const [zipFile] = fs.readdirSync(downloadResponse.downloadPath);
 
       if (!zipFile.endsWith(".zip")) {
@@ -246,8 +247,13 @@ async function run() {
 
     if (artifact) {
       try {
+        const token = core.getInput("token");
+        if (!token) {
+          core.setFailed("Token is required when using artifact.");
+          process.exit(1);
+        }
         core.info(`Attempting to download artifact: ${artifact}`);
-        fluencePath = await downloadArtifact(artifact);
+        fluencePath = await downloadArtifact(artifact, token);
         await setupBinary(fluencePath);
         return;
       } catch (error) {
