@@ -114,11 +114,13 @@ async function setupBinary(dir) {
 
 async function downloadArtifact(artifact) {
   const uniqueTempDir = await createTempDir(artifact);
-  let zipFilePath = path.join(uniqueTempDir, `${artifact}.zip`);
+  let zipFilePath;
 
   try {
     // Check if artifact is a URL
     if (isValidHttpUrl(artifact)) {
+      const fileName = path.basename(new URL(artifact).pathname);
+      zipFilePath = path.join(uniqueTempDir, fileName);
       await downloadFile(artifact, zipFilePath);
     } else {
       // Use artifact client to download the artifact
