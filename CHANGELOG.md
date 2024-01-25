@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.0](https://github.com/fluencelabs/setup-fluence/compare/v1.0.1...v1.1.0) (2024-01-25)
+
+
+### Features
+
+* Update @actions/artifact to v2 and add if-no-artifact-found input ([b74a841](https://github.com/fluencelabs/setup-fluence/commit/b74a841f74ba0726882addcf9e0f7f0be05cbfa6))
+
 ## [1.0.1](https://github.com/fluencelabs/setup-fluence/compare/v1.0.0...v1.0.1) (2023-10-27)
 
 
