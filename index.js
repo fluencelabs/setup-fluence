@@ -140,12 +140,14 @@ async function downloadArtifact(artifact, token) {
     } else {
       // Use artifact client to download the artifact
       const artifactClient = new DefaultArtifactClient();
-      const artifactId = artifactClient.getArtifact(artifact, { token: token });
-      const {downloadPath} = await artifactClient.downloadArtifact(
+      const { artifactId } = artifactClient.getArtifact(artifact, {
+        token: token,
+      });
+      const { downloadPath } = await artifactClient.downloadArtifact(
         artifactId,
         { path: uniqueTempDir, token: token },
       );
-      console.log(downloadPath)
+      console.log(downloadPath);
       const [zipFile] = fs.readdirSync(downloadPath);
 
       if (!zipFile.endsWith(".zip")) {
