@@ -44227,20 +44227,19 @@ async function run() {
             );
             break;
           }
-          case NoFileOptions.error: {
+          case NoArtifactOptions.error: {
             core.setFailed(
               `Failed to download artifact ${artifact} with ${error}.`,
             );
             break;
           }
-          case NoFileOptions.ignore: {
+          case NoArtifactOptions.ignore: {
             core.info(
               `Failed to download artifact ${artifact} with ${error}. Falling back to releases.`,
             );
             break;
           }
         }
-        core.warning();
       }
     }
 
