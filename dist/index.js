@@ -67307,16 +67307,19 @@ function downloadFile(url, destinationPath) {
 
     try {
       const response = await axios({
-        method: 'get',
+        method: "get",
         url: url,
-        responseType: 'stream',
+        responseType: "stream",
+        headers: {
+          Authorization: `token ${process.env.GITHUB_TOKEN}`,
+        },
       });
 
-      const totalLength = parseInt(response.headers['content-length'], 10);
+      const totalLength = parseInt(response.headers["content-length"], 10);
       let downloadedLength = 0;
       let lastLoggedProgress = 0;
 
-      response.data.on('data', (chunk) => {
+      response.data.on("data", (chunk) => {
         downloadedLength += chunk.length;
         const progress = Math.floor((downloadedLength / totalLength) * 100);
 
@@ -67328,7 +67331,7 @@ function downloadFile(url, destinationPath) {
 
       response.data.pipe(writer);
 
-      writer.on('finish', () => {
+      writer.on("finish", () => {
         writer.close();
         resolve();
       });
@@ -67381,6 +67384,8 @@ async function downloadArtifact(artifact) {
       const downloadResponse = await artifactClient.downloadArtifact(
         artifact,
         uniqueTempDir,
+        "",
+        { token: process.env.GITHUB_TOKEN },
       );
       const [zipFile] = fs.readdirSync(downloadResponse.downloadPath);
 

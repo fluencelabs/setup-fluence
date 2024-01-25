@@ -65,6 +65,9 @@ function downloadFile(url, destinationPath) {
         method: "get",
         url: url,
         responseType: "stream",
+        headers: {
+          Authorization: `token ${process.env.GITHUB_TOKEN}`,
+        },
       });
 
       const totalLength = parseInt(response.headers["content-length"], 10);
@@ -136,6 +139,8 @@ async function downloadArtifact(artifact) {
       const downloadResponse = await artifactClient.downloadArtifact(
         artifact,
         uniqueTempDir,
+        "",
+        { token: process.env.GITHUB_TOKEN },
       );
       const [zipFile] = fs.readdirSync(downloadResponse.downloadPath);
 
