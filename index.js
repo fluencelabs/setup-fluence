@@ -111,8 +111,6 @@ async function setupBinary(dir) {
 
 async function downloadArtifact(artifact) {
   const uniqueTempDir = await createTempDir(artifact);
-  let zipFilePath;
-
   try {
     const artifactClient = new DefaultArtifactClient();
     const artifactId = await artifactClient.getArtifact(artifact);
@@ -120,7 +118,6 @@ async function downloadArtifact(artifact) {
       artifactId.artifact.id,
       { path: uniqueTempDir },
     );
-    console.log(downloadPath);
     const [tarFile] = fs.readdirSync(downloadPath);
 
     if (tarFile.endsWith(".tar.gz")) {
