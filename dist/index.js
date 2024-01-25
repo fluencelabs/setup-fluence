@@ -44223,19 +44223,23 @@ async function run() {
         switch (ifNoArtifactFound) {
           case NoArtifactOptions.warn: {
             core.warning(
-              `Failed to download artifact ${artifact} with ${error}. Falling back to releases.`,
+              `Failed to download artifact '${artifact}' with error:
+              ${error}.
+              Falling back to releases.`,
             );
             break;
           }
           case NoArtifactOptions.error: {
             core.setFailed(
-              `Failed to download artifact ${artifact} with ${error}.`,
+              `Failed to download artifact '${artifact}' with error:
+              ${error}`,
             );
-            break;
           }
           case NoArtifactOptions.ignore: {
             core.info(
-              `Failed to download artifact ${artifact} with ${error}. Falling back to releases.`,
+              `Failed to download artifact '${artifact}' with error:
+              ${error}
+              Falling back to releases.`,
             );
             break;
           }
