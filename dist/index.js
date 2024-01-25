@@ -44197,12 +44197,12 @@ async function run() {
       throw new Error(`Unsupported platform: ${PLATFORM}`);
     }
 
-    const ifNoArtifactFound = core.getInput(Inputs.IfNoArtifactFound);
+    const ifNoArtifactFound = core.getInput("if-no-artifact-found");
     const noArtifactBehavior = NoArtifactOptions[ifNoArtifactFound];
 
     if (!noArtifactBehavior) {
       core.setFailed(
-        `Unrecognized ${Inputs.IfNoArtifactFound} input. Provided: ${ifNoArtifactFound}. Available options: ${
+        `Unrecognized 'if-no-artifact-found' input. Provided: ${ifNoArtifactFound}. Available options: ${
           Object.keys(
             NoArtifactOptions,
           )
