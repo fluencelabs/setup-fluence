@@ -68,6 +68,8 @@ function downloadFile(url, destinationPath, headers) {
       headers: headers,
     });
 
+    console.log(response)
+
     response.then((axiosResponse) => {
       const totalLength = parseInt(axiosResponse.headers["content-length"], 10);
       let downloadedLength = 0;
@@ -133,14 +135,14 @@ async function downloadArtifact(artifact, token) {
       zipFilePath = path.join(uniqueTempDir, fileName);
       const headers = {};
       if (artifact.includes("github.com")) {
-        headers["authorization"] = `Bearer ${token}`;
+        headers["Authorization"] = `Bearer ${token}`;
       }
 
       await downloadFile(artifact, zipFilePath, headers);
     } else {
       // Use artifact client to download the artifact
       const artifactClient = new DefaultArtifactClient();
-      const { artifactId } = artifactClient.getArtifact(artifact, {
+      const { artifactId } = await artifactClient.getArtifact(artifact, {
         token: token,
       });
       console.log(artifactId)
